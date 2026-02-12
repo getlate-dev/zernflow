@@ -21,32 +21,32 @@ const nodeTypeConfig: Record<string, { label: string; icon: typeof Cog; color: s
   trigger: {
     label: "Trigger",
     icon: Zap,
-    color: "bg-emerald-500 dark:bg-emerald-600",
+    color: "bg-emerald-500",
     borderColor: "border-emerald-500",
   },
   sendMessage: {
     label: "Send Message",
     icon: MessageSquare,
-    color: "bg-blue-500 dark:bg-blue-600",
+    color: "bg-blue-500",
     borderColor: "border-blue-500",
   },
   condition: {
     label: "Condition",
     icon: GitBranch,
-    color: "bg-amber-500 dark:bg-amber-600",
+    color: "bg-amber-500",
     borderColor: "border-amber-500",
   },
   delay: {
     label: "Delay",
     icon: Clock,
-    color: "bg-purple-500 dark:bg-purple-600",
+    color: "bg-purple-500",
     borderColor: "border-purple-500",
   },
   action: {
     label: "Action",
     icon: Cog,
-    color: "bg-gray-500 dark:bg-gray-600",
-    borderColor: "border-gray-400 dark:border-gray-500",
+    color: "bg-gray-500",
+    borderColor: "border-gray-400",
   },
 };
 
@@ -95,7 +95,7 @@ export function NodeConfigSidebar({ node, onChange, onClose }: NodeConfigSidebar
         return <ActionPanel data={data} onChange={handleChange} />;
       default:
         return (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500">
             No configuration panel available for this node type.
           </p>
         );
@@ -105,20 +105,20 @@ export function NodeConfigSidebar({ node, onChange, onClose }: NodeConfigSidebar
   return (
     <div
       className={cn(
-        "flex w-80 flex-col border-l bg-white dark:bg-gray-900",
+        "flex w-80 flex-col border-l bg-white",
         config.borderColor
       )}
       style={{ borderLeftWidth: "3px" }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className={cn("rounded-md p-1.5 text-white", config.color)}>
             <Icon className="h-3.5 w-3.5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{config.label}</p>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            <p className="text-sm font-semibold text-gray-900">{config.label}</p>
+            <p className="text-[11px] text-gray-500">
               ID: {node.id.slice(0, 12)}...
             </p>
           </div>
@@ -126,15 +126,15 @@ export function NodeConfigSidebar({ node, onChange, onClose }: NodeConfigSidebar
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Node Label */}
-      <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <label className="mb-1.5 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <label className="mb-1.5 block text-xs font-semibold text-gray-700">
           Node Name
         </label>
         <input
@@ -142,7 +142,7 @@ export function NodeConfigSidebar({ node, onChange, onClose }: NodeConfigSidebar
           value={(node.data as Record<string, unknown>).label as string || ""}
           onChange={(e) => handleLabelChange(e.target.value)}
           placeholder={config.label}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-gray-400 dark:focus:ring-gray-400"
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
         />
       </div>
 

@@ -29,9 +29,9 @@ export function DelayNode({ data, selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !border-2 !border-purple-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-purple-500 !bg-white"
       />
-      <div className="flex items-center gap-2 rounded-t-lg bg-purple-500 px-3 py-2 text-white dark:bg-purple-600">
+      <div className="flex items-center gap-2 rounded-t-lg bg-purple-500 px-3 py-2 text-white">
         <Clock className="h-3.5 w-3.5" />
         <span className="text-xs font-semibold">Delay</span>
       </div>
@@ -49,7 +49,7 @@ export function DelayNode({ data, selected }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-3 !w-3 !border-2 !border-purple-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-purple-500 !bg-white"
       />
     </div>
   );

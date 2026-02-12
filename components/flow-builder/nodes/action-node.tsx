@@ -38,62 +38,62 @@ const actionConfig: Record<
   addTag: {
     icon: Tag,
     label: "Add Tag",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   removeTag: {
     icon: Tag,
     label: "Remove Tag",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   setCustomField: {
     icon: FileText,
     label: "Set Field",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   httpRequest: {
     icon: Globe,
     label: "HTTP Request",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   goToFlow: {
     icon: ArrowRightLeft,
     label: "Go To Flow",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   humanTakeover: {
     icon: UserCheck,
     label: "Human Takeover",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   subscribe: {
     icon: Bell,
     label: "Subscribe",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   unsubscribe: {
     icon: Bell,
     label: "Unsubscribe",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   commentReply: {
     icon: Cog,
     label: "Comment Reply",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   privateReply: {
     icon: Cog,
     label: "Private Reply",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   abSplit: {
     icon: Shuffle,
     label: "A/B Split",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
   smartDelay: {
     icon: Hourglass,
     label: "Smart Delay",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   },
 };
 
@@ -142,7 +142,7 @@ export function ActionNode({ data, selected }: NodeProps) {
   const config = actionConfig[actionType] || {
     icon: Cog,
     label: "Action",
-    color: "bg-gray-500 dark:bg-gray-600",
+    color: "bg-gray-500",
   };
   const Icon = config.icon;
   const label = nodeData.label || config.label;
@@ -155,13 +155,13 @@ export function ActionNode({ data, selected }: NodeProps) {
     <div
       className={cn(
         "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
-        selected ? "border-gray-400 shadow-md dark:border-gray-500" : "border-border"
+        selected ? "border-gray-400 shadow-md" : "border-border"
       )}
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white"
       />
       <div
         className={cn(
@@ -189,7 +189,7 @@ export function ActionNode({ data, selected }: NodeProps) {
               position={Position.Bottom}
               id={`split-${i}`}
               style={{ left: `${((i + 1) / (paths.length + 1)) * 100}%` }}
-              className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white dark:!bg-gray-800"
+              className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white"
             />
           ))}
         </>
@@ -197,7 +197,7 @@ export function ActionNode({ data, selected }: NodeProps) {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white dark:!bg-gray-800"
+          className="!h-3 !w-3 !border-2 !border-gray-400 !bg-white"
         />
       )}
     </div>

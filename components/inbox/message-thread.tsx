@@ -286,16 +286,16 @@ export function MessageThread({
             className={cn(
               "rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
               conversation.status === "open"
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                ? "bg-green-100 text-green-700"
                 : conversation.status === "snoozed"
-                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                ? "bg-yellow-100 text-yellow-700"
                 : "bg-muted text-muted-foreground"
             )}
           >
             {conversation.status}
           </span>
           {conversation.is_automation_paused && (
-            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+            <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">
               Bot paused
             </span>
           )}

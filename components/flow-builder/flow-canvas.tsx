@@ -242,9 +242,9 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             className={cn(
               "inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium",
               flow.status === "published"
-                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                ? "bg-emerald-100 text-emerald-800"
                 : flow.status === "archived"
-                  ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                  ? "bg-amber-100 text-amber-800"
                   : "bg-muted text-muted-foreground"
             )}
           >

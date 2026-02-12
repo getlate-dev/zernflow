@@ -33,13 +33,13 @@ const platformConfig: Record<
 > = {
   facebook: {
     label: "Facebook",
-    color: "text-blue-600 dark:text-blue-400",
-    bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    color: "text-blue-600",
+    bgColor: "bg-blue-100",
   },
   instagram: {
     label: "Instagram",
-    color: "text-pink-600 dark:text-pink-400",
-    bgColor: "bg-pink-100 dark:bg-pink-900/30",
+    color: "text-pink-600",
+    bgColor: "bg-pink-100",
   },
   twitter: {
     label: "X / Twitter",
@@ -48,18 +48,18 @@ const platformConfig: Record<
   },
   telegram: {
     label: "Telegram",
-    color: "text-sky-600 dark:text-sky-400",
-    bgColor: "bg-sky-100 dark:bg-sky-900/30",
+    color: "text-sky-600",
+    bgColor: "bg-sky-100",
   },
   bluesky: {
     label: "Bluesky",
-    color: "text-blue-500 dark:text-blue-400",
-    bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    color: "text-blue-500",
+    bgColor: "bg-blue-100",
   },
   reddit: {
     label: "Reddit",
-    color: "text-orange-600 dark:text-orange-400",
-    bgColor: "bg-orange-100 dark:bg-orange-900/30",
+    color: "text-orange-600",
+    bgColor: "bg-orange-100",
   },
 };
 
@@ -243,9 +243,9 @@ export function ChannelsView({
 
             {/* Error */}
             {accountsError && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                <p className="text-sm text-red-700 dark:text-red-400">
+                <p className="text-sm text-red-700">
                   {accountsError}
                 </p>
               </div>
@@ -253,9 +253,9 @@ export function ChannelsView({
 
             {/* Connect error */}
             {connectError && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                <p className="text-sm text-red-700 dark:text-red-400">
+                <p className="text-sm text-red-700">
                   {connectError}
                 </p>
               </div>
@@ -403,7 +403,7 @@ export function ChannelsView({
                       className={cn(
                         "rounded-lg p-2 transition-colors",
                         channel.is_active
-                          ? "text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30"
+                          ? "text-green-600 hover:bg-green-100"
                           : "text-muted-foreground hover:bg-muted"
                       )}
                       title={
@@ -426,7 +426,7 @@ export function ChannelsView({
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                         channel.is_active
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          ? "bg-green-100 text-green-700"
                           : "bg-muted text-muted-foreground"
                       )}
                     >

@@ -157,7 +157,7 @@ export function ContactPanel({
               className={cn(
                 "mt-2 rounded-full px-2.5 py-0.5 text-[10px] font-medium",
                 details.contact.is_subscribed
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                  ? "bg-green-100 text-green-700"
                   : "bg-muted text-muted-foreground"
               )}
             >

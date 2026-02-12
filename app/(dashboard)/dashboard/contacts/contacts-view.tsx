@@ -299,7 +299,7 @@ export function ContactsView({
                     </td>
                     <td className="px-4 py-3">
                       {contact.is_subscribed ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Yes
                         </span>

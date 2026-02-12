@@ -35,9 +35,9 @@ export function SendMessageNode({ data, selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !border-2 !border-blue-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-blue-500 !bg-white"
       />
-      <div className="flex items-center gap-2 rounded-t-lg bg-blue-500 px-3 py-2 text-white dark:bg-blue-600">
+      <div className="flex items-center gap-2 rounded-t-lg bg-blue-500 px-3 py-2 text-white">
         <MessageSquare className="h-3.5 w-3.5" />
         <span className="text-xs font-semibold">Send Message</span>
       </div>
@@ -56,12 +56,12 @@ export function SendMessageNode({ data, selected }: NodeProps) {
         )}
         <div className="mt-2 flex gap-2">
           {messageCount > 1 && (
-            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
               {messageCount} messages
             </span>
           )}
           {buttonCount > 0 && (
-            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
               {buttonCount} {buttonCount === 1 ? "button" : "buttons"}
             </span>
           )}
@@ -70,7 +70,7 @@ export function SendMessageNode({ data, selected }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-3 !w-3 !border-2 !border-blue-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-blue-500 !bg-white"
       />
     </div>
   );

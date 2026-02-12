@@ -195,10 +195,10 @@ export function GrowthView({
       <div className="border-b border-border px-8 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900">
               Growth Tools
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-500">
               Comment-to-DM automation for lead capture and engagement
             </p>
           </div>
@@ -244,14 +244,14 @@ export function GrowthView({
 
         {/* Create form */}
         {showCreate && (
-          <div className="mt-6 rounded-xl border border-border bg-white p-6 dark:bg-gray-800">
+          <div className="mt-6 rounded-xl border border-border bg-white p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-sm font-semibold text-gray-900">
                 Create Comment-to-DM Rule
               </h2>
               <button
                 onClick={() => setShowCreate(false)}
-                className="rounded-md p-1 text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-700"
+                className="rounded-md p-1 text-gray-400 hover:bg-gray-100"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -260,7 +260,7 @@ export function GrowthView({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {/* Channel */}
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Channel
                 </label>
                 <select
@@ -268,7 +268,7 @@ export function GrowthView({
                   onChange={(e) =>
                     setForm((f) => ({ ...f, channelId: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {channels.map((ch) => (
                     <option key={ch.id} value={ch.id}>
@@ -281,7 +281,7 @@ export function GrowthView({
 
               {/* Flow */}
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Response Flow
                 </label>
                 <select
@@ -289,7 +289,7 @@ export function GrowthView({
                   onChange={(e) =>
                     setForm((f) => ({ ...f, flowId: e.target.value }))
                   }
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {flows.map((flow) => (
                     <option key={flow.id} value={flow.id}>
@@ -301,7 +301,7 @@ export function GrowthView({
 
               {/* Keywords */}
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Keywords (comma-separated)
                 </label>
                 <input
@@ -311,13 +311,13 @@ export function GrowthView({
                     setForm((f) => ({ ...f, keywords: e.target.value }))
                   }
                   placeholder="info, price, details"
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
               {/* Match Type */}
               <div>
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Match Type
                 </label>
                 <select
@@ -331,7 +331,7 @@ export function GrowthView({
                         | "startsWith",
                     }))
                   }
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="contains">Contains</option>
                   <option value="exact">Exact match</option>
@@ -341,7 +341,7 @@ export function GrowthView({
 
               {/* Public reply text (optional) */}
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Public Reply (optional)
                 </label>
                 <input
@@ -351,9 +351,9 @@ export function GrowthView({
                     setForm((f) => ({ ...f, replyText: e.target.value }))
                   }
                   placeholder="Check your DMs! We just sent you more info."
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                <p className="mt-1 text-[11px] text-gray-400">
                   If set, this will be posted as a public reply to the matching
                   comment before sending the DM.
                 </p>
@@ -361,7 +361,7 @@ export function GrowthView({
 
               {/* Post IDs (optional) */}
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label className="text-xs font-medium text-gray-500">
                   Specific Post IDs (optional, comma-separated)
                 </label>
                 <input
@@ -371,9 +371,9 @@ export function GrowthView({
                     setForm((f) => ({ ...f, postIds: e.target.value }))
                   }
                   placeholder="Leave empty to match comments on all posts"
-                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                <p className="mt-1 text-[11px] text-gray-400">
                   Limit this rule to specific Late post IDs. If empty, all posts
                   on this channel are monitored.
                 </p>
@@ -383,7 +383,7 @@ export function GrowthView({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -402,12 +402,12 @@ export function GrowthView({
 
         {/* Empty state */}
         {channels.length === 0 && (
-          <div className="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-            <MessageCircle className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
-            <h2 className="mt-3 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+            <MessageCircle className="mx-auto h-10 w-10 text-gray-300" />
+            <h2 className="mt-3 text-lg font-semibold text-gray-900">
               Connect a channel first
             </h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-sm text-gray-500">
               You need at least one active channel to set up comment automation.
             </p>
             <a
@@ -420,12 +420,12 @@ export function GrowthView({
         )}
 
         {flows.length === 0 && channels.length > 0 && (
-          <div className="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-            <MessageCircle className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" />
-            <h2 className="mt-3 text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="mt-8 rounded-xl border border-dashed border-gray-300 p-8 text-center">
+            <MessageCircle className="mx-auto h-10 w-10 text-gray-300" />
+            <h2 className="mt-3 text-lg font-semibold text-gray-900">
               Create a flow first
             </h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-sm text-gray-500">
               Publish at least one flow to use as the DM response when comments
               match your keywords.
             </p>
@@ -441,10 +441,10 @@ export function GrowthView({
         {/* Active rules */}
         {triggers.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-gray-900">
               Active Comment Rules
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-500">
               When a comment matches a keyword, the linked flow sends a DM to
               the commenter.
             </p>
@@ -459,10 +459,10 @@ export function GrowthView({
                   <div
                     key={trigger.id}
                     className={cn(
-                      "rounded-xl border bg-white p-5 transition-shadow hover:shadow-sm dark:bg-gray-800",
+                      "rounded-xl border bg-white p-5 transition-shadow hover:shadow-sm",
                       trigger.is_active
-                        ? "border-gray-200 dark:border-gray-700"
-                        : "border-gray-200/60 opacity-60 dark:border-gray-700/60"
+                        ? "border-gray-200"
+                        : "border-gray-200/60 opacity-60"
                     )}
                   >
                     <div className="flex items-start justify-between">
@@ -472,8 +472,8 @@ export function GrowthView({
                             className={cn(
                               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                               trigger.is_active
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-500"
                             )}
                           >
                             <span
@@ -481,14 +481,14 @@ export function GrowthView({
                                 "h-1.5 w-1.5 rounded-full",
                                 trigger.is_active
                                   ? "bg-green-500"
-                                  : "bg-gray-400 dark:bg-gray-500"
+                                  : "bg-gray-400"
                               )}
                             />
                             {trigger.is_active ? "Active" : "Paused"}
                           </span>
 
                           {channel && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-gray-500">
                               {channel.display_name ||
                                 channel.username ||
                                 platformLabels[channel.platform]}
@@ -496,7 +496,7 @@ export function GrowthView({
                           )}
 
                           {!trigger.channel_id && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-gray-500">
                               All channels
                             </span>
                           )}
@@ -507,7 +507,7 @@ export function GrowthView({
                           {config.keywords?.map((kw, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                              className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
                             >
                               {kw.matchType === "exact" && "= "}
                               {kw.matchType === "startsWith" && "^ "}
@@ -517,23 +517,23 @@ export function GrowthView({
                         </div>
 
                         {/* Flow name */}
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <p className="mt-2 text-xs text-gray-500">
                           Flow:{" "}
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="font-medium text-gray-700">
                             {trigger.flows?.name || "Unknown"}
                           </span>
                         </p>
 
                         {/* Reply text preview */}
                         {config.replyText && (
-                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                          <p className="mt-1 text-xs text-gray-400">
                             Public reply: &ldquo;{config.replyText}&rdquo;
                           </p>
                         )}
 
                         {/* Post IDs */}
                         {config.postIds?.length ? (
-                          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                          <p className="mt-1 text-xs text-gray-400">
                             Limited to {config.postIds.length} post
                             {config.postIds.length !== 1 ? "s" : ""}
                           </p>
@@ -548,8 +548,8 @@ export function GrowthView({
                           className={cn(
                             "rounded-lg p-2 transition-colors",
                             trigger.is_active
-                              ? "text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
-                              : "text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-700"
+                              ? "text-green-600 hover:bg-green-50"
+                              : "text-gray-400 hover:bg-gray-100"
                           )}
                           title={
                             trigger.is_active ? "Pause rule" : "Activate rule"
@@ -564,7 +564,7 @@ export function GrowthView({
                         <button
                           onClick={() => handleDelete(trigger.id)}
                           disabled={deletingId === trigger.id}
-                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-gray-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                           title="Delete rule"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -581,30 +581,30 @@ export function GrowthView({
         {/* Recent activity log */}
         {recentLogs.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-gray-900">
               Recent Activity
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-gray-500">
               Latest processed comments and their outcomes.
             </p>
 
-            <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
-                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500">
                       Author
                     </th>
-                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500">
                       Comment
                     </th>
-                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500">
                       Matched
                     </th>
-                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500">
                       DM
                     </th>
-                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-xs font-medium text-gray-500">
                       Time
                     </th>
                   </tr>
@@ -613,51 +613,51 @@ export function GrowthView({
                   {recentLogs.map((log) => (
                     <tr
                       key={log.id}
-                      className="border-b border-gray-100 last:border-0 dark:border-gray-700/50"
+                      className="border-b border-gray-100 last:border-0"
                     >
                       <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-gray-900">
                           {log.author_name || log.author_username || "Unknown"}
                         </p>
                         {log.author_username && (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
+                          <p className="text-xs text-gray-400">
                             @{log.author_username}
                           </p>
                         )}
                       </td>
-                      <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                      <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-700">
                         {log.comment_text}
                       </td>
                       <td className="px-4 py-3">
                         {log.matched_trigger_id ? (
-                          <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
                             Yes
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
                             No
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         {log.dm_sent ? (
-                          <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                          <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
                             Sent
                           </span>
                         ) : log.error ? (
                           <span
-                            className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700"
                             title={log.error}
                           >
                             Error
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                          <span className="text-xs text-gray-400">
                             --
                           </span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-400">
                         {formatRelativeTime(log.created_at)}
                       </td>
                     </tr>
@@ -684,15 +684,15 @@ function StatCard({
   sublabel: string;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+    <div className="rounded-xl border border-gray-200 bg-white p-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-        <div className="text-gray-400 dark:text-gray-500">{icon}</div>
+        <p className="text-sm text-gray-500">{label}</p>
+        <div className="text-gray-400">{icon}</div>
       </div>
-      <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+      <p className="mt-2 text-3xl font-bold text-gray-900">
         {value}
       </p>
-      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-1 text-xs text-gray-400">
         {sublabel}
       </p>
     </div>

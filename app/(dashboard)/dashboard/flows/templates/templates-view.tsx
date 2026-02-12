@@ -54,8 +54,8 @@ const templates: FlowTemplate[] = [
       "Greet new users with a welcome message, wait a minute, then send a follow-up to keep them engaged.",
     category: "Onboarding",
     icon: MessageSquare,
-    iconColor: "text-blue-600 dark:text-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-900/30",
+    iconColor: "text-blue-600",
+    iconBg: "bg-blue-100",
     nodes: [
       {
         id: "trigger-1",
@@ -109,8 +109,8 @@ const templates: FlowTemplate[] = [
       'Respond to "help" or "faq" keywords by checking the message and routing to different answer branches.',
     category: "Support",
     icon: HelpCircle,
-    iconColor: "text-amber-600 dark:text-amber-400",
-    iconBg: "bg-amber-100 dark:bg-amber-900/30",
+    iconColor: "text-amber-600",
+    iconBg: "bg-amber-100",
     nodes: [
       {
         id: "trigger-1",
@@ -180,8 +180,8 @@ const templates: FlowTemplate[] = [
       "Collect lead information step by step: ask for name, wait for response, save it, then ask for email and tag the contact.",
     category: "Marketing",
     icon: UserPlus,
-    iconColor: "text-green-600 dark:text-green-400",
-    iconBg: "bg-green-100 dark:bg-green-900/30",
+    iconColor: "text-green-600",
+    iconBg: "bg-green-100",
     nodes: [
       {
         id: "trigger-1",

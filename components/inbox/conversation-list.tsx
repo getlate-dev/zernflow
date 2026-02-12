@@ -22,7 +22,7 @@ const platformIcons: Record<Platform, string> = {
 const platformColors: Record<Platform, string> = {
   facebook: "bg-blue-500",
   instagram: "bg-gradient-to-br from-purple-500 to-pink-500",
-  twitter: "bg-black dark:bg-white dark:text-black",
+  twitter: "bg-black",
   telegram: "bg-sky-500",
   bluesky: "bg-blue-400",
   reddit: "bg-orange-500",

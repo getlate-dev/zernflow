@@ -31,7 +31,7 @@ export function TriggerNode({ data, selected }: NodeProps) {
         selected ? "border-emerald-500 shadow-md" : "border-border"
       )}
     >
-      <div className="flex items-center gap-2 rounded-t-lg bg-emerald-500 px-3 py-2 text-white dark:bg-emerald-600">
+      <div className="flex items-center gap-2 rounded-t-lg bg-emerald-500 px-3 py-2 text-white">
         <Zap className="h-3.5 w-3.5" />
         <span className="text-xs font-semibold">Trigger</span>
       </div>
@@ -56,7 +56,7 @@ export function TriggerNode({ data, selected }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-3 !w-3 !border-2 !border-emerald-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-emerald-500 !bg-white"
       />
     </div>
   );

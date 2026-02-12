@@ -40,25 +40,25 @@ const statusConfig: Record<
     label: "Scheduled",
     icon: Clock,
     className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      "bg-blue-100 text-blue-700",
   },
   sending: {
     label: "Sending",
     icon: Loader2,
     className:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      "bg-yellow-100 text-yellow-700",
   },
   completed: {
     label: "Completed",
     icon: CheckCircle2,
     className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      "bg-green-100 text-green-700",
   },
   cancelled: {
     label: "Cancelled",
     icon: XCircle,
     className:
-      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      "bg-red-100 text-red-700",
   },
 };
 
@@ -279,7 +279,7 @@ export function BroadcastsView({
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                      <p className="text-lg font-semibold text-green-600">
                         {broadcast.sent}
                       </p>
                       <p className="text-[10px] uppercase text-muted-foreground">
@@ -287,7 +287,7 @@ export function BroadcastsView({
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                      <p className="text-lg font-semibold text-blue-600">
                         {broadcast.delivered}
                       </p>
                       <p className="text-[10px] uppercase text-muted-foreground">
@@ -295,7 +295,7 @@ export function BroadcastsView({
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                      <p className="text-lg font-semibold text-red-600">
                         {broadcast.failed}
                       </p>
                       <p className="text-[10px] uppercase text-muted-foreground">

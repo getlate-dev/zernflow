@@ -255,7 +255,7 @@ export function SettingsView({
               </button>
 
               {testResult && testResult.success && (
-                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                <span className="flex items-center gap-1 text-xs text-green-600">
                   <Check className="h-3.5 w-3.5" />
                   Connected ({testResult.accountCount}{" "}
                   {testResult.accountCount === 1 ? "account" : "accounts"}{" "}
@@ -264,14 +264,14 @@ export function SettingsView({
               )}
 
               {testResult && !testResult.success && (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-red-600">
                   {testResult.error}
                 </span>
               )}
             </div>
 
             {workspace.hasApiKey && !testResult && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
                 <Check className="h-3 w-3" />
                 API key configured
               </p>
@@ -362,14 +362,14 @@ export function SettingsView({
             </button>
 
             {saved && (
-              <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+              <span className="flex items-center gap-1 text-sm text-green-600">
                 <Check className="h-4 w-4" />
                 Settings saved
               </span>
             )}
 
             {error && (
-              <span className="text-sm text-red-600 dark:text-red-400">
+              <span className="text-sm text-red-600">
                 {error}
               </span>
             )}

@@ -325,29 +325,29 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
       label: "Total Flows",
       value: stats.totalFlows,
       icon: GitBranch,
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-100 dark:bg-blue-900/30",
+      color: "text-blue-600",
+      bg: "bg-blue-100",
     },
     {
       label: "Total Contacts",
       value: stats.totalContacts,
       icon: Users,
-      color: "text-purple-600 dark:text-purple-400",
-      bg: "bg-purple-100 dark:bg-purple-900/30",
+      color: "text-purple-600",
+      bg: "bg-purple-100",
     },
     {
       label: "Messages Sent",
       value: stats.messagesSent,
       icon: Send,
-      color: "text-green-600 dark:text-green-400",
-      bg: "bg-green-100 dark:bg-green-900/30",
+      color: "text-green-600",
+      bg: "bg-green-100",
     },
     {
       label: "Messages Failed",
       value: stats.messagesFailed,
       icon: AlertTriangle,
-      color: "text-red-600 dark:text-red-400",
-      bg: "bg-red-100 dark:bg-red-900/30",
+      color: "text-red-600",
+      bg: "bg-red-100",
     },
   ];
 
@@ -468,7 +468,7 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
                     <MiniBarChart
                       data={contactGrowth.map((d) => d.count)}
                       maxVal={maxContactGrowth}
-                      color="bg-purple-500 dark:bg-purple-400"
+                      color="bg-purple-500"
                     />
                     <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
                       <span>{formatShortDate(contactGrowth[0].date)}</span>
@@ -492,11 +492,11 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
                   <h3 className="text-sm font-semibold">Message Volume</h3>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <span className="inline-block h-2 w-2 rounded-full bg-green-500 dark:bg-green-400" />
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
                       Sent
                     </span>
                     <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <span className="inline-block h-2 w-2 rounded-full bg-red-500 dark:bg-red-400" />
+                      <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
                       Failed
                     </span>
                   </div>
@@ -521,14 +521,14 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
                           >
                             {failedPct > 0 && (
                               <div
-                                className="bg-red-500 dark:bg-red-400 rounded-t-sm min-h-[1px]"
+                                className="bg-red-500 rounded-t-sm min-h-[1px]"
                                 style={{ height: `${failedPct}%` }}
                               />
                             )}
                             {sentPct > 0 && (
                               <div
                                 className={cn(
-                                  "bg-green-500 dark:bg-green-400 min-h-[1px]",
+                                  "bg-green-500 min-h-[1px]",
                                   failedPct === 0 && "rounded-t-sm"
                                 )}
                                 style={{ height: `${sentPct}%` }}
@@ -611,10 +611,10 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
                             className={cn(
                               "inline-flex items-center gap-1 text-sm font-medium",
                               flow.dropOffRate > 50
-                                ? "text-red-600 dark:text-red-400"
+                                ? "text-red-600"
                                 : flow.dropOffRate > 25
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-green-600 dark:text-green-400"
+                                  ? "text-yellow-600"
+                                  : "text-green-600"
                             )}
                           >
                             {flow.dropOffRate > 50 ? (

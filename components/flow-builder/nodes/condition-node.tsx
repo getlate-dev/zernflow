@@ -39,9 +39,9 @@ export function ConditionNode({ data, selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !border-2 !border-amber-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-amber-500 !bg-white"
       />
-      <div className="flex items-center gap-2 rounded-t-lg bg-amber-500 px-3 py-2 text-white dark:bg-amber-600">
+      <div className="flex items-center gap-2 rounded-t-lg bg-amber-500 px-3 py-2 text-white">
         <GitBranch className="h-3.5 w-3.5" />
         <span className="text-xs font-semibold">Condition</span>
       </div>
@@ -52,7 +52,7 @@ export function ConditionNode({ data, selected }: NodeProps) {
             {conditions.slice(0, 2).map((c, i) => (
               <p key={i} className="text-xs text-muted-foreground">
                 {i > 0 && (
-                  <span className="font-medium uppercase text-amber-600 dark:text-amber-400">
+                  <span className="font-medium uppercase text-amber-600">
                     {logic}{" "}
                   </span>
                 )}
@@ -70,24 +70,24 @@ export function ConditionNode({ data, selected }: NodeProps) {
         )}
       </div>
       <div className="flex justify-between border-t border-border px-3 py-1.5">
-        <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+        <span className="text-[10px] font-medium text-emerald-600">
           Yes
         </span>
-        <span className="text-[10px] font-medium text-red-500 dark:text-red-400">No</span>
+        <span className="text-[10px] font-medium text-red-500">No</span>
       </div>
       <Handle
         type="source"
         position={Position.Bottom}
         id="yes"
         style={{ left: "30%" }}
-        className="!h-3 !w-3 !border-2 !border-emerald-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-emerald-500 !bg-white"
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="no"
         style={{ left: "70%" }}
-        className="!h-3 !w-3 !border-2 !border-red-500 !bg-white dark:!bg-gray-800"
+        className="!h-3 !w-3 !border-2 !border-red-500 !bg-white"
       />
     </div>
   );
