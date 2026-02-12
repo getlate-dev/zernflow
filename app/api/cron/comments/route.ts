@@ -143,13 +143,15 @@ async function pollChannelComments(
   // Fetch recent posts for this channel via Late API history
   let posts: Array<{ id: string; platforms: string[] }>;
   try {
-    const history = await late.history({
+    const historyResult = await late.history({
       lastDays: 7,
       platform: channel.platform,
     });
 
-    // history() returns an array or a single item
-    const historyItems = Array.isArray(history) ? history : [history];
+    // SDK history() returns an array or a single item
+    const historyItems = Array.isArray(historyResult)
+      ? historyResult
+      : [historyResult];
     posts = historyItems
       .filter((item) => item?.id)
       .map((item) => ({
@@ -173,7 +175,7 @@ async function pollChannelComments(
 
   for (const post of posts) {
     try {
-      const { comments } = await late.comments.get(post.id);
+      const { comments } = await late.getComments({ id: post.id });
 
       if (!comments?.length) continue;
 

@@ -170,7 +170,7 @@ async function processJob(
       const messageContent = broadcastData?.message_content;
 
       try {
-        await late.messages.send(channel.late_account_id, {
+        await late.sendMessage(channel.late_account_id, {
           conversationId: conv.late_conversation_id,
           text: messageContent?.text || "",
         });

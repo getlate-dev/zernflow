@@ -70,26 +70,22 @@ export function SettingsView({
     setTestResult(null);
 
     try {
-      const res = await fetch("https://getlate.dev/api/v1/accounts", {
-        headers: {
-          Authorization: `Bearer ${keyToTest}`,
-          "Content-Type": "application/json",
-        },
+      const res = await fetch("/api/v1/channels/test-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: keyToTest }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
         setTestResult({
           success: false,
-          error:
-            res.status === 401
-              ? "Invalid API key. Please check your key and try again."
-              : `Connection failed (${res.status}). ${body?.error || ""}`.trim(),
+          error: data.error || `Connection failed (${res.status})`,
         });
         return;
       }
 
-      const data = await res.json();
       const accounts = data.accounts || [];
       setTestResult({
         success: true,

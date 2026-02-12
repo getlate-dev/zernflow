@@ -162,7 +162,7 @@ export async function processComment(
     if (config.replyText && workspace?.late_api_key_encrypted) {
       try {
         const late = createLateClient(workspace.late_api_key_encrypted);
-        await late.comments.reply({
+        await late.replyComment({
           commentId: comment.id,
           platforms: [comment.platform],
           comment: config.replyText,

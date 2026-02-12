@@ -1,75 +1,17 @@
 /**
- * Late REST API client.
+ * Late API client.
  *
- * Replaces the SDK-based wrapper with direct HTTP calls to the Late API,
- * which supports DMs, conversations, webhooks, and comments.
- *
- * Base URL: https://getlate.dev/api
- * Auth: Bearer token (API key)
+ * Uses the official @getlatedev/social-media-api SDK for all supported methods.
+ * Only adds direct API calls for DM/inbox endpoints not yet in the SDK.
  */
+
+import SocialMediaAPI from "@getlatedev/social-media-api";
 
 const LATE_API_BASE = "https://getlate.dev/api";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types for DM/inbox (not in SDK)
 // ---------------------------------------------------------------------------
-
-export interface LateAccount {
-  _id: string;
-  platform: string;
-  username: string;
-  displayName: string;
-  profileUrl: string | null;
-  isActive: boolean;
-  status: string;
-  metadata: Record<string, unknown>;
-}
-
-export interface LateConversation {
-  id: string;
-  platform: string;
-  accountId: string;
-  participantId: string;
-  participantName: string;
-  participantPicture: string | null;
-  lastMessage: string | null;
-  updatedTime: string;
-  unreadCount: number;
-}
-
-export interface LatePagination {
-  hasMore: boolean;
-  nextCursor: string | null;
-}
-
-export interface LateWebhook {
-  _id: string;
-  name: string;
-  url: string;
-  secret: string;
-  events: string[];
-  isActive: boolean;
-}
-
-export interface LateComment {
-  id: string;
-  comment: string;
-  created: string;
-  platform: string;
-  commenter?: {
-    id?: string;
-    name?: string;
-    username?: string;
-  };
-  [key: string]: unknown;
-}
-
-export interface LatePost {
-  id: string;
-  platforms?: string[];
-  status?: string;
-  [key: string]: unknown;
-}
 
 export interface LateSendMessageResponse {
   success: boolean;
@@ -81,321 +23,135 @@ export interface LateSendMessageResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Error
+// DM/inbox helper (not covered by SDK)
 // ---------------------------------------------------------------------------
 
-class LateAPIError extends Error {
-  status: number;
-  body: unknown;
+async function inboxRequest<T>(
+  apiKey: string,
+  method: string,
+  path: string,
+  body?: Record<string, unknown>
+): Promise<T> {
+  const response = await fetch(`${LATE_API_BASE}${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
 
-  constructor(message: string, status: number, body: unknown) {
-    super(message);
-    this.name = "LateAPIError";
-    this.status = status;
-    this.body = body;
+  if (!response.ok) {
+    let errorBody: unknown;
+    try {
+      errorBody = await response.json();
+    } catch {
+      errorBody = await response.text().catch(() => null);
+    }
+    throw new Error(
+      `Late API ${method} ${path} failed (${response.status}): ${JSON.stringify(errorBody)}`
+    );
   }
+
+  if (response.status === 204) return {} as T;
+  return response.json() as Promise<T>;
 }
 
 // ---------------------------------------------------------------------------
-// Client
+// Extended client: SDK + inbox methods
 // ---------------------------------------------------------------------------
 
-class LateClient {
-  private apiKey: string;
+export class LateClient extends SocialMediaAPI {
+  private _apiKey: string;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    super(apiKey);
+    this._apiKey = apiKey;
   }
-
-  // -----------------------------------------------------------------------
-  // Internal fetch helper
-  // -----------------------------------------------------------------------
-
-  private async request<T>(
-    method: string,
-    path: string,
-    options?: {
-      body?: Record<string, unknown>;
-      params?: Record<string, string | number | boolean | undefined>;
-    }
-  ): Promise<T> {
-    const url = new URL(`${LATE_API_BASE}${path}`);
-
-    if (options?.params) {
-      for (const [key, value] of Object.entries(options.params)) {
-        if (value !== undefined) {
-          url.searchParams.set(key, String(value));
-        }
-      }
-    }
-
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.apiKey}`,
-      "Content-Type": "application/json",
-    };
-
-    const response = await fetch(url.toString(), {
-      method,
-      headers,
-      ...(options?.body ? { body: JSON.stringify(options.body) } : {}),
-    });
-
-    if (!response.ok) {
-      let body: unknown;
-      try {
-        body = await response.json();
-      } catch {
-        body = await response.text().catch(() => null);
-      }
-      throw new LateAPIError(
-        `Late API ${method} ${path} failed with status ${response.status}`,
-        response.status,
-        body
-      );
-    }
-
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json() as Promise<T>;
-  }
-
-  // -----------------------------------------------------------------------
-  // Accounts
-  // -----------------------------------------------------------------------
-
-  accounts = {
-    /**
-     * List all connected social accounts.
-     */
-    list: async (): Promise<LateAccount[]> => {
-      const res = await this.request<{ accounts: LateAccount[] }>(
-        "GET",
-        "/v1/accounts"
-      );
-      return res.accounts;
-    },
-
-  };
-
-  // -----------------------------------------------------------------------
-  // Messages / Conversations (DMs)
-  // -----------------------------------------------------------------------
-
-  conversations = {
-    /**
-     * List conversations (inbox).
-     */
-    list: async (options?: {
-      accountId?: string;
-      platform?: string;
-      limit?: number;
-      cursor?: string;
-    }): Promise<{
-      data: LateConversation[];
-      pagination: LatePagination;
-    }> => {
-      return this.request("GET", "/v1/inbox/conversations", {
-        params: {
-          accountId: options?.accountId,
-          platform: options?.platform,
-          limit: options?.limit,
-          cursor: options?.cursor,
-        },
-      });
-    },
-
-    /**
-     * Get a single conversation's details.
-     */
-    get: async (
-      conversationId: string,
-      accountId: string
-    ): Promise<LateConversation> => {
-      const res = await this.request<{ data: LateConversation }>(
-        "GET",
-        `/v1/inbox/conversations/${conversationId}`,
-        { params: { accountId } }
-      );
-      return res.data;
-    },
-  };
-
-  messages = {
-    /**
-     * Send a message to a conversation via the Late API.
-     * Requires a conversationId (all messages go to existing conversations).
-     */
-    send: async (
-      accountId: string,
-      options: {
-        conversationId: string;
-        text?: string;
-        imageUrl?: string;
-      }
-    ): Promise<{ messageId: string | null }> => {
-      const body: Record<string, unknown> = {
-        accountId,
-        message: options.text || "",
-      };
-
-      if (options.imageUrl) {
-        body.attachment = options.imageUrl;
-      }
-
-      const res = await this.request<LateSendMessageResponse>(
-        "POST",
-        `/v1/inbox/conversations/${options.conversationId}/messages`,
-        { body }
-      );
-      return { messageId: res.data?.messageId ?? null };
-    },
-  };
-
-  // -----------------------------------------------------------------------
-  // Post history
-  // -----------------------------------------------------------------------
 
   /**
-   * Fetch post history. Maps to the Late REST API's posts/history endpoint.
+   * List all connected social accounts with full details.
+   * SDK's user() only returns platform names, not account IDs/details.
+   * Not yet available in the SDK.
    */
-  async history(options?: {
-    lastRecords?: number;
-    lastDays?: number;
-    platform?: string;
-    status?: string;
-    id?: string;
-  }): Promise<LatePost[]> {
-    const res = await this.request<{ posts: LatePost[] }>(
+  async listAccounts(): Promise<
+    Array<{
+      _id: string;
+      platform: string;
+      username: string;
+      displayName: string;
+      profileUrl: string | null;
+      profilePicture: string | null;
+      isActive: boolean;
+      status: string;
+    }>
+  > {
+    const res = await inboxRequest<{ accounts: Array<Record<string, any>> }>(
+      this._apiKey,
       "GET",
-      "/v1/posts",
-      {
-        params: {
-          limit: options?.lastRecords,
-          days: options?.lastDays,
-          platform: options?.platform,
-          status: options?.status,
-          id: options?.id,
-        },
-      }
+      "/v1/accounts"
     );
-    return res.posts ?? [];
+    return (res.accounts ?? []).map((a) => ({
+      _id: a._id,
+      platform: a.platform,
+      username: a.username || "",
+      displayName: a.displayName || a.username || "",
+      profileUrl: a.profileUrl || a.profilePicture || null,
+      profilePicture: a.profilePicture || a.profileUrl || null,
+      isActive: a.isActive ?? true,
+      status: a.status || "active",
+    }));
   }
 
-  // -----------------------------------------------------------------------
-  // Comments
-  // -----------------------------------------------------------------------
+  /**
+   * Send a DM to a conversation via the Late inbox API.
+   * Not yet available in the SDK.
+   */
+  async sendMessage(
+    accountId: string,
+    options: {
+      conversationId: string;
+      text?: string;
+      imageUrl?: string;
+    }
+  ): Promise<{ messageId: string | null }> {
+    const body: Record<string, unknown> = {
+      accountId,
+      message: options.text || "",
+    };
+    if (options.imageUrl) {
+      body.attachment = options.imageUrl;
+    }
 
-  comments = {
-    /**
-     * Get comments for a given Late post ID.
-     */
-    get: async (
-      postId: string,
-      accountId?: string
-    ): Promise<{ comments: LateComment[] }> => {
-      const res = await this.request<{ comments: LateComment[] }>(
-        "GET",
-        `/v1/inbox/comments/${postId}`,
-        { params: { accountId } }
-      );
-      return { comments: res.comments ?? [] };
-    },
+    const res = await inboxRequest<LateSendMessageResponse>(
+      this._apiKey,
+      "POST",
+      `/v1/inbox/conversations/${options.conversationId}/messages`,
+      body
+    );
+    return { messageId: res.data?.messageId ?? null };
+  }
 
-    /**
-     * Post a public reply to a specific comment.
-     */
-    reply: async (options: {
-      postId?: string;
-      commentId: string;
-      platforms: string[];
-      comment: string;
-      accountId?: string;
-    }): Promise<{ status: string }> => {
-      const postId = options.postId || options.commentId;
-      return this.request("POST", `/v1/inbox/comments/${postId}`, {
-        body: {
-          accountId: options.accountId,
-          message: options.comment,
-          commentId: options.commentId,
-        },
-      });
-    },
-
-    /**
-     * Send a private DM reply to a commenter (Instagram only).
-     */
-    privateReply: async (options: {
-      postId: string;
-      commentId: string;
-      accountId: string;
-      message: string;
-    }): Promise<{ status: string }> => {
-      return this.request(
-        "POST",
-        `/v1/inbox/comments/${options.postId}/${options.commentId}/private-reply`,
-        {
-          body: {
-            accountId: options.accountId,
-            message: options.message,
-          },
-        }
-      );
-    },
-  };
-
-  // -----------------------------------------------------------------------
-  // Webhooks
-  // -----------------------------------------------------------------------
-
-  webhooks = {
-    /**
-     * List all registered webhooks.
-     */
-    list: async (): Promise<LateWebhook[]> => {
-      const res = await this.request<{ webhooks: LateWebhook[] }>(
-        "GET",
-        "/v1/webhooks/settings"
-      );
-      return res.webhooks;
-    },
-
-    /**
-     * Create a new webhook.
-     */
-    create: async (options: {
-      accountId?: string;
-      name?: string;
-      url: string;
-      events: string[];
-      secret: string;
-    }): Promise<{ id: string | null }> => {
-      const res = await this.request<{
-        success: boolean;
-        webhook: LateWebhook;
-      }>("POST", "/v1/webhooks/settings", {
-        body: {
-          name: options.name || "Zernflow webhook",
-          url: options.url,
-          secret: options.secret,
-          events: options.events,
-          isActive: true,
-        },
-      });
-      return { id: res.webhook?._id ?? null };
-    },
-
-    /**
-     * Delete a webhook by ID.
-     */
-    delete: async (webhookId: string): Promise<void> => {
-      await this.request("DELETE", "/v1/webhooks/settings", {
-        params: { id: webhookId },
-      });
-    },
-  };
+  /**
+   * Send a private DM reply to a commenter (Instagram comment-to-DM).
+   * Not yet available in the SDK.
+   */
+  async privateReplyToComment(options: {
+    postId: string;
+    commentId: string;
+    accountId: string;
+    message: string;
+  }): Promise<{ status: string }> {
+    return inboxRequest(
+      this._apiKey,
+      "POST",
+      `/v1/inbox/comments/${options.postId}/${options.commentId}/private-reply`,
+      {
+        accountId: options.accountId,
+        message: options.message,
+      }
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

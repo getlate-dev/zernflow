@@ -331,7 +331,7 @@ async function executeSendMessage(
         ? [{ type: "image", url: adapted.imageUrl }]
         : undefined;
 
-      const response = await late.messages.send(lateAccountId, {
+      const response = await late.sendMessage(lateAccountId, {
         conversationId: lateConversationId,
         text,
         imageUrl: adapted.imageUrl,
@@ -688,12 +688,10 @@ async function executeCommentReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.comments.reply({
-      postId,
-      accountId: lateAccountId,
-      comment: text,
+    await late.replyComment({
       commentId,
       platforms: [context.platform!],
+      comment: text,
     });
   } catch (error) {
     console.error("Failed to post comment reply:", error);
@@ -744,7 +742,7 @@ async function executePrivateReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.comments.privateReply({
+    await late.privateReplyToComment({
       postId,
       commentId,
       accountId: lateAccountId,

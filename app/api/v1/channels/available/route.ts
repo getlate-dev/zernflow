@@ -36,7 +36,7 @@ export async function GET() {
 
   try {
     // Fetch all accounts from Late API
-    const accounts = await late.accounts.list();
+    const accounts = await late.listAccounts();
 
     // Fetch already-connected channel late_account_ids for this workspace
     const { data: connectedChannels } = await supabase

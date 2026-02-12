@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createLateClient } from "@/lib/late-client";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -77,32 +78,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "API key not configured" }, { status: 400 });
   }
 
-  // Send via Late REST API
+  // Send via Late SDK
   try {
-    const lateResponse = await fetch(
-      `https://getlate.dev/api/v1/inbox/conversations/${conversation.late_conversation_id}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${workspace.late_api_key_encrypted}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accountId: channel.late_account_id,
-          message: text,
-        }),
-      }
-    );
-
-    if (!lateResponse.ok) {
-      const lateError = await lateResponse.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: lateError.error || `Late API error (${lateResponse.status})` },
-        { status: lateResponse.status }
-      );
-    }
-
-    const lateData = await lateResponse.json();
+    const late = createLateClient(workspace.late_api_key_encrypted);
+    const lateData = await late.sendMessage(channel.late_account_id, {
+      conversationId: conversation.late_conversation_id,
+      text,
+    });
 
     // Store outbound message in Supabase
     const { data: message, error } = await supabase
@@ -112,7 +94,7 @@ export async function POST(request: NextRequest) {
         direction: "outbound",
         text,
         sent_by_user_id: user.id,
-        platform_message_id: lateData?.data?.messageId || null,
+        platform_message_id: lateData?.messageId || null,
         status: "sent",
       })
       .select("*")
