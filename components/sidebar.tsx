@@ -50,7 +50,7 @@ export function Sidebar({
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-            F
+            Z
           </div>
           <span className="font-semibold text-sidebar-foreground">
             {workspace.name}

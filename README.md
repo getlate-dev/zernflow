@@ -1,14 +1,14 @@
-# FlowChat
+# ZernFlow
 
 Open-source chatbot builder for social media. Visual flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## What is FlowChat?
+## What is ZernFlow?
 
-FlowChat is an open-source alternative to ManyChat. Build visual chatbot flows, manage contacts, send broadcasts, and handle live chat conversations across 6 social media platforms.
+ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, manage contacts, send broadcasts, and handle live chat conversations across 6 social media platforms.
 
-**Powered by [Late API](https://getlate.dev)** for OAuth, token refresh, rate limiting, and cross-platform messaging.
+**Powered by [Zernio](https://zernio.com)** for OAuth, token refresh, rate limiting, and cross-platform messaging.
 
 ### Features
 
@@ -27,15 +27,15 @@ FlowChat is an open-source alternative to ManyChat. Build visual chatbot flows, 
 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [Late API](https://getlate.dev) key
+- A [Zernio](https://zernio.com) API key
 
 ### Setup
 
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/getlate-dev/flowchat.git
-cd flowchat
+git clone https://github.com/getlate-dev/zernflow.git
+cd zernflow
 npm install
 ```
 
@@ -53,13 +53,13 @@ Create a free project at [supabase.com](https://supabase.com). Then run the SQL 
 cp .env.example .env
 ```
 
-Fill in your Supabase and Late API credentials:
+Fill in your Supabase and Zernio API credentials:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-LATE_API_KEY=your-late-api-key
+LATE_API_KEY=your-zernio-api-key
 ```
 
 4. **Run**
@@ -84,7 +84,7 @@ Recv.  Engine     Chat
    |    |    |    |    |
    +----+----+----+----+
         |         |
-    Supabase   Late API
+    Supabase    Zernio
   (PG + Auth   (6 platforms)
   + Realtime)
 ```
@@ -97,7 +97,7 @@ Recv.  Engine     Chat
 | Database + Auth + Realtime | Supabase |
 | Flow Builder | React Flow |
 | UI | Tailwind CSS |
-| Messaging | Late API SDK |
+| Messaging | Zernio API SDK |
 
 ## Flow Node Types
 
@@ -121,7 +121,7 @@ Recv.  Engine     Chat
 ## Project Structure
 
 ```
-flowchat/
+zernflow/
 ├── app/
 │   ├── (auth)/             # Login, register pages
 │   ├── (dashboard)/        # Dashboard, flows, inbox, contacts, etc.
