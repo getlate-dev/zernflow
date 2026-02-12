@@ -124,12 +124,17 @@ export function SettingsView({
         update.late_api_key_encrypted = apiKey.trim();
       }
 
-      const { error: updateError } = await supabase
+      const { error: updateError, count } = await supabase
         .from("workspaces")
         .update(update)
-        .eq("id", workspace.id);
+        .eq("id", workspace.id)
+        .select("id")
+        .single();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Settings save error:", updateError);
+        throw new Error(updateError.message);
+      }
 
       setSaved(true);
       setApiKey("");
@@ -137,7 +142,7 @@ export function SettingsView({
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error("Failed to save settings:", err);
-      setError("Failed to save settings. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to save settings. Please try again.");
     } finally {
       setSaving(false);
     }
