@@ -2,7 +2,7 @@ import { getWorkspace } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, GitBranch } from "lucide-react";
+import { Plus, GitBranch, Sparkles } from "lucide-react";
 import type { FlowStatus } from "@/lib/types/database";
 
 const statusConfig: Record<FlowStatus, { label: string; classes: string }> = {
@@ -77,15 +77,24 @@ export default async function FlowsPage() {
             Build automated chatbot flows for your channels
           </p>
         </div>
-        <form action={createFlow}>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/flows/templates"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
-            <Plus className="h-4 w-4" />
-            New Flow
-          </button>
-        </form>
+            <Sparkles className="h-4 w-4" />
+            Templates
+          </Link>
+          <form action={createFlow}>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-4 w-4" />
+              New Flow
+            </button>
+          </form>
+        </div>
       </div>
 
       {!flows || flows.length === 0 ? (

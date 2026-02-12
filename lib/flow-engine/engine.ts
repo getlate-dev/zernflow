@@ -12,6 +12,8 @@ import type {
   HttpRequestNodeData,
   GoToFlowNodeData,
   ABSplitNodeData,
+  CommentReplyNodeData,
+  PrivateReplyNodeData,
 } from "./types";
 import { adaptMessage } from "./platform-adapter";
 import { createLateClient } from "@/lib/late-client";
@@ -220,6 +222,10 @@ async function executeNode(
     case "subscribe":
     case "unsubscribe":
       return executeSubscription(supabase, node.type, context);
+    case "commentReply":
+      return executeCommentReply(supabase, node.data as CommentReplyNodeData, context);
+    case "privateReply":
+      return executePrivateReply(supabase, node.data as PrivateReplyNodeData, context);
     case "abSplit":
       return executeABSplit(node.data as ABSplitNodeData);
     case "smartDelay":
@@ -583,6 +589,118 @@ function executeABSplit(data: ABSplitNodeData): string {
   }
 
   return `handle:${data.paths[0].name}`;
+}
+
+/**
+ * Post a public reply to the comment that triggered this flow.
+ * Uses the comment_text and post_id variables set by the comment processor.
+ */
+async function executeCommentReply(
+  supabase: SupabaseClient<Database>,
+  data: CommentReplyNodeData,
+  context: FlowExecutionContext
+) {
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("late_api_key_encrypted")
+    .eq("id", context.workspaceId)
+    .single();
+
+  if (!workspace?.late_api_key_encrypted) return;
+
+  const late = createLateClient(workspace.late_api_key_encrypted);
+  const { data: channel } = await supabase
+    .from("channels")
+    .select("platform")
+    .eq("id", context.channelId)
+    .single();
+
+  if (!channel) return;
+
+  // The incoming message sender ID is used as the comment ID for reply
+  // The comment processor sets incomingMessage.sender.id to the commenter's platform ID
+  // and variables.comment_id if available
+  const commentId = context.variables?.comment_id || context.incomingMessage.sender?.id;
+  if (!commentId) return;
+
+  const text = interpolateVariables(data.text, context.variables || {});
+
+  try {
+    await late.comments.reply({
+      commentId,
+      platforms: [channel.platform],
+      comment: text,
+    });
+  } catch (error) {
+    console.error("Failed to post comment reply:", error);
+  }
+}
+
+/**
+ * Send a private DM to the commenter.
+ * This is essentially the same as sendMessage but specifically for private replies.
+ */
+async function executePrivateReply(
+  supabase: SupabaseClient<Database>,
+  data: PrivateReplyNodeData,
+  context: FlowExecutionContext
+) {
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("late_api_key_encrypted")
+    .eq("id", context.workspaceId)
+    .single();
+
+  if (!workspace?.late_api_key_encrypted) return;
+
+  const late = createLateClient(workspace.late_api_key_encrypted);
+  const { data: channel } = await supabase
+    .from("channels")
+    .select("late_account_id, platform")
+    .eq("id", context.channelId)
+    .single();
+
+  if (!channel) return;
+
+  const { data: contactChannel } = await supabase
+    .from("contact_channels")
+    .select("platform_sender_id")
+    .eq("contact_id", context.contactId)
+    .eq("channel_id", context.channelId)
+    .single();
+
+  if (!contactChannel) return;
+
+  const text = interpolateVariables(data.text, context.variables || {});
+
+  try {
+    const response = await late.messages.send(channel.late_account_id, {
+      to: contactChannel.platform_sender_id,
+      text,
+      ...(data.imageUrl ? { imageUrl: data.imageUrl } : {}),
+    });
+
+    await supabase.from("messages").insert({
+      conversation_id: context.conversationId,
+      direction: "outbound",
+      text,
+      attachments: data.imageUrl
+        ? [{ type: "image", url: data.imageUrl }]
+        : null,
+      sent_by_flow_id: context.flowId,
+      platform_message_id: response?.id || null,
+      status: "sent",
+    });
+  } catch (error) {
+    console.error("Failed to send private reply:", error);
+    await supabase.from("messages").insert({
+      conversation_id: context.conversationId,
+      direction: "outbound",
+      text,
+      sent_by_flow_id: context.flowId,
+      status: "failed",
+    });
+  }
 }
 
 async function completeSession(

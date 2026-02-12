@@ -47,6 +47,60 @@ class LateClient {
     },
   };
 
+  /**
+   * Fetch post history. Proxies directly to the SDK's history() method.
+   */
+  async history(options?: {
+    lastRecords?: number;
+    lastDays?: number;
+    platform?: string;
+    status?: string;
+    id?: string;
+  }) {
+    return this.api.history(options);
+  }
+
+  comments = {
+    /**
+     * Fetch comments for a given Late post ID.
+     * Returns an array of comment objects from the underlying API.
+     */
+    get: async (
+      postId: string
+    ): Promise<{
+      comments: Array<{
+        id: string;
+        comment: string;
+        created: string;
+        platform: string;
+        commenter?: {
+          id?: string;
+          name?: string;
+          username?: string;
+        };
+        [key: string]: unknown;
+      }>;
+    }> => {
+      const result = await this.api.getComments({ id: postId });
+      return { comments: result?.comments ?? [] };
+    },
+
+    /**
+     * Post a reply to a specific comment.
+     */
+    reply: async (options: {
+      commentId: string;
+      platforms: string[];
+      comment: string;
+    }): Promise<{ status: string }> => {
+      return this.api.replyComment({
+        commentId: options.commentId,
+        platforms: options.platforms,
+        comment: options.comment,
+      });
+    },
+  };
+
   webhooks = {
     create: async (options: {
       accountId: string;

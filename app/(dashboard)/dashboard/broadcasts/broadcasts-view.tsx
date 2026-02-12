@@ -12,10 +12,17 @@ import {
   XCircle,
   FileEdit,
   Calendar,
+  Filter,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import type { Database, BroadcastStatus } from "@/lib/types/database";
+import {
+  SegmentBuilder,
+  createEmptyFilter,
+  type SegmentFilter,
+} from "@/components/segment-builder";
+import type { Database, BroadcastStatus, Json } from "@/lib/types/database";
 
 type Broadcast = Database["public"]["Tables"]["broadcasts"]["Row"];
 
@@ -77,6 +84,10 @@ export function BroadcastsView({
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [items, setItems] = useState(broadcasts);
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(
+    createEmptyFilter()
+  );
+  const [showSegmentFilter, setShowSegmentFilter] = useState(false);
 
   async function handleCreate() {
     if (!newName.trim() || creating) return;
@@ -91,6 +102,7 @@ export function BroadcastsView({
           name: newName.trim(),
           status: "draft",
           message_content: {},
+          segment_filter: showSegmentFilter ? (segmentFilter as unknown as Json) : null,
         })
         .select()
         .single();
@@ -130,35 +142,72 @@ export function BroadcastsView({
 
         {/* Create form */}
         {showCreate && (
-          <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-card p-4">
-            <input
-              type="text"
-              placeholder="Broadcast name..."
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreate();
-                if (e.key === "Escape") setShowCreate(false);
-              }}
-              autoFocus
-              className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button
-              onClick={handleCreate}
-              disabled={!newName.trim() || creating}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              {creating ? "Creating..." : "Create"}
-            </button>
-            <button
-              onClick={() => {
-                setShowCreate(false);
-                setNewName("");
-              }}
-              className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
-            >
-              Cancel
-            </button>
+          <div className="mt-4 rounded-lg border border-border bg-card p-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Broadcast name..."
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !showSegmentFilter) handleCreate();
+                  if (e.key === "Escape") setShowCreate(false);
+                }}
+                autoFocus
+                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={handleCreate}
+                disabled={!newName.trim() || creating}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {creating ? "Creating..." : "Create"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreate(false);
+                  setNewName("");
+                  setShowSegmentFilter(false);
+                  setSegmentFilter(createEmptyFilter());
+                }}
+                className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+              >
+                Cancel
+              </button>
+            </div>
+
+            {/* Targeting section */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowSegmentFilter(!showSegmentFilter)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                  showSegmentFilter
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+              >
+                <Filter className="h-3.5 w-3.5" />
+                Target specific contacts
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 transition-transform",
+                    showSegmentFilter && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {showSegmentFilter && (
+                <div className="mt-3">
+                  <SegmentBuilder
+                    value={segmentFilter}
+                    onChange={setSegmentFilter}
+                    workspaceId={workspaceId}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -30,6 +30,7 @@ import { SendMessageNode } from "./nodes/send-message-node";
 import { ConditionNode } from "./nodes/condition-node";
 import { DelayNode } from "./nodes/delay-node";
 import { ActionNode } from "./nodes/action-node";
+import { NodeConfigSidebar } from "./panels/NodeConfigSidebar";
 
 type Flow = Database["public"]["Tables"]["flows"]["Row"];
 
@@ -86,6 +87,11 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  const selectedNode = selectedNodeId
+    ? nodes.find((n) => n.id === selectedNodeId) || null
+    : null;
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -137,6 +143,32 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
     },
     [screenToFlowPosition, setNodes]
   );
+
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
+    },
+    []
+  );
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
+  const onNodeDataChange = useCallback(
+    (nodeId: string, newData: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId ? { ...n, data: newData } : n
+        )
+      );
+    },
+    [setNodes]
+  );
+
+  const closeSidebar = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
 
   const saveFlow = useCallback(
     async (status?: FlowStatus) => {
@@ -264,6 +296,8 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
             deleteKeyCode={["Backspace", "Delete"]}
@@ -281,6 +315,13 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             />
           </ReactFlow>
         </div>
+        {selectedNode && (
+          <NodeConfigSidebar
+            node={selectedNode}
+            onChange={onNodeDataChange}
+            onClose={closeSidebar}
+          />
+        )}
       </div>
     </div>
   );

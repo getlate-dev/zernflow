@@ -125,6 +125,8 @@ export interface Database {
           webhook_id: string | null;
           webhook_secret: string | null;
           is_active: boolean;
+          last_comment_cursor: string | null;
+          comment_rules: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -139,6 +141,8 @@ export interface Database {
           webhook_id?: string | null;
           webhook_secret?: string | null;
           is_active?: boolean;
+          last_comment_cursor?: string | null;
+          comment_rules?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -151,6 +155,8 @@ export interface Database {
           webhook_id?: string | null;
           webhook_secret?: string | null;
           is_active?: boolean;
+          last_comment_cursor?: string | null;
+          comment_rules?: Json | null;
           updated_at?: string;
         };
         Relationships: [
@@ -806,6 +812,69 @@ export interface Database {
             columns: ["workspace_id"];
             isOneToOne: false;
             referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      comment_logs: {
+        Row: {
+          id: string;
+          channel_id: string;
+          workspace_id: string;
+          post_id: string | null;
+          platform_comment_id: string;
+          author_id: string | null;
+          author_name: string | null;
+          author_username: string | null;
+          comment_text: string;
+          matched_trigger_id: string | null;
+          dm_sent: boolean;
+          reply_sent: boolean;
+          error: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          channel_id: string;
+          workspace_id: string;
+          post_id?: string | null;
+          platform_comment_id: string;
+          author_id?: string | null;
+          author_name?: string | null;
+          author_username?: string | null;
+          comment_text: string;
+          matched_trigger_id?: string | null;
+          dm_sent?: boolean;
+          reply_sent?: boolean;
+          error?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          matched_trigger_id?: string | null;
+          dm_sent?: boolean;
+          reply_sent?: boolean;
+          error?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comment_logs_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comment_logs_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comment_logs_matched_trigger_id_fkey";
+            columns: ["matched_trigger_id"];
+            isOneToOne: false;
+            referencedRelation: "triggers";
             referencedColumns: ["id"];
           },
         ];

@@ -9,8 +9,15 @@ import {
   Calendar,
   CheckCircle,
   XCircle,
+  Filter,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  SegmentBuilder,
+  createEmptyFilter,
+  type SegmentFilter,
+} from "@/components/segment-builder";
 import type { Database, Platform } from "@/lib/types/database";
 
 type Tag = Database["public"]["Tables"]["tags"]["Row"];
@@ -54,6 +61,10 @@ export function ContactsView({
 }) {
   const [search, setSearch] = useState("");
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [showSegmentBuilder, setShowSegmentBuilder] = useState(false);
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(
+    createEmptyFilter()
+  );
 
   const filtered = contacts.filter((contact) => {
     // Search filter
@@ -98,7 +109,36 @@ export function ContactsView({
               className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+          <button
+            onClick={() => setShowSegmentBuilder(!showSegmentBuilder)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+              showSegmentBuilder
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            <Filter className="h-4 w-4" />
+            Segment
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 transition-transform",
+                showSegmentBuilder && "rotate-180"
+              )}
+            />
+          </button>
         </div>
+
+        {/* Segment builder */}
+        {showSegmentBuilder && (
+          <div className="mt-4">
+            <SegmentBuilder
+              value={segmentFilter}
+              onChange={setSegmentFilter}
+              workspaceId={workspaceId}
+            />
+          </div>
+        )}
 
         {/* Tag pills */}
         {tags.length > 0 && (

@@ -27,7 +27,9 @@ export type NodeData =
   | HumanTakeoverNodeData
   | ABSplitNodeData
   | SmartDelayNodeData
-  | SubscribeNodeData;
+  | SubscribeNodeData
+  | CommentReplyNodeData
+  | PrivateReplyNodeData;
 
 export interface TriggerNodeData {
   triggerType: string;
@@ -104,6 +106,17 @@ export interface SmartDelayNodeData {
 
 export interface SubscribeNodeData {
   action: "subscribe" | "unsubscribe";
+}
+
+export interface CommentReplyNodeData {
+  /** Text to reply to the comment with. Supports {{variable}} interpolation. */
+  text: string;
+}
+
+export interface PrivateReplyNodeData {
+  /** Text to send as a private DM to the commenter. Supports {{variable}} interpolation. */
+  text: string;
+  imageUrl?: string;
 }
 
 export interface FlowExecutionContext {

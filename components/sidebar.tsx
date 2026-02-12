@@ -8,6 +8,8 @@ import {
   MessageSquare,
   Users,
   Radio,
+  BarChart3,
+  Sprout,
   Plug,
   Settings,
   LogOut,
@@ -25,6 +27,8 @@ const navigation = [
   { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare },
   { name: "Contacts", href: "/dashboard/contacts", icon: Users },
   { name: "Broadcasts", href: "/dashboard/broadcasts", icon: Radio },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Growth", href: "/dashboard/growth", icon: Sprout },
   { name: "Channels", href: "/dashboard/channels", icon: Plug },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

@@ -299,7 +299,7 @@ create trigger set_updated_at before update on broadcasts for each row execute f
 create or replace function handle_new_user()
 returns trigger as $$
 declare
-  workspace_id uuid;
+  ws_id uuid;
   user_name text;
   workspace_slug text;
 begin
@@ -310,16 +310,19 @@ begin
   );
   workspace_slug := lower(regexp_replace(user_name, '[^a-zA-Z0-9]', '-', 'g')) || '-' || substr(new.id::text, 1, 8);
 
-  insert into workspaces (name, slug)
+  insert into public.workspaces (name, slug)
   values (user_name || '''s Workspace', workspace_slug)
-  returning id into workspace_id;
+  returning id into ws_id;
 
-  insert into workspace_members (workspace_id, user_id, role)
-  values (workspace_id, new.id, 'owner');
+  insert into public.workspace_members (workspace_id, user_id, role)
+  values (ws_id, new.id, 'owner');
 
   return new;
+exception when others then
+  raise log 'handle_new_user error: % %', sqlerrm, sqlstate;
+  return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 create trigger on_auth_user_created
   after insert on auth.users
