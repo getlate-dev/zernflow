@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   GitBranch,
@@ -53,9 +54,7 @@ export function Sidebar({
     <div className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-            Z
-          </div>
+          <Image src="/logo.png" alt="ZernFlow" width={28} height={28} className="rounded-lg" />
           <span className="font-semibold text-sidebar-foreground">
             {workspace.name}
           </span>

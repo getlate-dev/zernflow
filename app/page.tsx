@@ -1,9 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
       <div className="text-center">
+        <Image src="/logo.png" alt="ZernFlow" width={80} height={80} className="mx-auto mb-4" />
         <h1 className="text-4xl font-bold tracking-tight">ZernFlow</h1>
         <p className="mt-3 text-lg text-muted-foreground">
           Open-source chatbot builder for social media
