@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { executeFlow } from "@/lib/flow-engine/engine";
+import type { Json } from "@/lib/types/database";
 
 /**
  * Cron job handler that processes scheduled jobs.
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
 
 async function processJob(
   supabase: Awaited<ReturnType<typeof createServiceClient>>,
-  job: { type: string; payload: Record<string, unknown> }
+  job: { type: string; payload: Json }
 ) {
   switch (job.type) {
     case "resume_flow": {

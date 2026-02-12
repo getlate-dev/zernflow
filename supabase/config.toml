@@ -1,6 +1,3 @@
-[project]
-id = "zernflow"
-
 [api]
 enabled = true
 port = 54321
@@ -14,6 +11,3 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["http://localhost:3000/auth/callback"]
 jwt_expiry = 3600
-
-[auth.external.github]
-enabled = true

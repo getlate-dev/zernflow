@@ -85,6 +85,7 @@ export interface Database {
           global_keywords?: Json | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       workspace_members: {
         Row: {
@@ -102,6 +103,15 @@ export interface Database {
         Update: {
           role?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       channels: {
         Row: {
@@ -143,6 +153,15 @@ export interface Database {
           is_active?: boolean;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "channels_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       contacts: {
         Row: {
@@ -178,6 +197,15 @@ export interface Database {
           metadata?: Json | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "contacts_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       contact_channels: {
         Row: {
@@ -199,6 +227,22 @@ export interface Database {
         Update: {
           platform_username?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "contact_channels_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contact_channels_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       tags: {
         Row: {
@@ -219,6 +263,15 @@ export interface Database {
           name?: string;
           color?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "tags_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       contact_tags: {
         Row: {
@@ -231,7 +284,26 @@ export interface Database {
           tag_id: string;
           created_at?: string;
         };
-        Update: never;
+        Update: {
+          contact_id?: string;
+          tag_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contact_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       custom_field_definitions: {
         Row: {
@@ -255,6 +327,15 @@ export interface Database {
           slug?: string;
           type?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_definitions_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       contact_custom_fields: {
         Row: {
@@ -273,6 +354,22 @@ export interface Database {
           value?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "contact_custom_fields_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contact_custom_fields_field_id_fkey";
+            columns: ["field_id"];
+            isOneToOne: false;
+            referencedRelation: "custom_field_definitions";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       flows: {
         Row: {
@@ -314,6 +411,15 @@ export interface Database {
           published_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "flows_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       triggers: {
         Row: {
@@ -343,6 +449,22 @@ export interface Database {
           priority?: number;
           is_active?: boolean;
         };
+        Relationships: [
+          {
+            foreignKeyName: "triggers_flow_id_fkey";
+            columns: ["flow_id"];
+            isOneToOne: false;
+            referencedRelation: "flows";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "triggers_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       flow_sessions: {
         Row: {
@@ -385,6 +507,29 @@ export interface Database {
           human_takeover_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "flow_sessions_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "flow_sessions_flow_id_fkey";
+            columns: ["flow_id"];
+            isOneToOne: false;
+            referencedRelation: "flows";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "flow_sessions_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       conversations: {
         Row: {
@@ -429,6 +574,29 @@ export interface Database {
           is_automation_paused?: boolean;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversations_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       messages: {
         Row: {
@@ -467,6 +635,15 @@ export interface Database {
           status?: MessageStatus;
           platform_message_id?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       broadcasts: {
         Row: {
@@ -511,6 +688,15 @@ export interface Database {
           failed?: number;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "broadcasts_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       broadcast_recipients: {
         Row: {
@@ -536,6 +722,29 @@ export interface Database {
           sent_at?: string | null;
           error_message?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_recipients_broadcast_id_fkey";
+            columns: ["broadcast_id"];
+            isOneToOne: false;
+            referencedRelation: "broadcasts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "broadcast_recipients_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "broadcast_recipients_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       scheduled_jobs: {
         Row: {
@@ -563,6 +772,7 @@ export interface Database {
           attempts?: number;
           last_error?: string | null;
         };
+        Relationships: [];
       };
       analytics_events: {
         Row: {
@@ -583,8 +793,53 @@ export interface Database {
           metadata?: Json | null;
           created_at?: string;
         };
-        Update: never;
+        Update: {
+          workspace_id?: string;
+          flow_id?: string | null;
+          contact_id?: string | null;
+          event_type?: string;
+          metadata?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      increment_unread: {
+        Args: {
+          conv_id: string;
+          preview: string;
+        };
+        Returns: undefined;
+      };
+      increment_broadcast_sent: {
+        Args: {
+          b_id: string;
+        };
+        Returns: undefined;
+      };
+      increment_broadcast_failed: {
+        Args: {
+          b_id: string;
+        };
+        Returns: undefined;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
