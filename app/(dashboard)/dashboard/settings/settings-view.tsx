@@ -95,6 +95,21 @@ export function SettingsView({
         success: true,
         accountCount: accounts.length,
       });
+
+      // Auto-save the key on successful test
+      const supabase = createClient();
+      const { error: saveErr } = await supabase
+        .from("workspaces")
+        .update({ late_api_key_encrypted: keyToTest })
+        .eq("id", workspace.id)
+        .select("id")
+        .single();
+
+      if (saveErr) {
+        console.error("Failed to auto-save API key:", saveErr);
+      } else {
+        setApiKey("");
+      }
     } catch {
       setTestResult({
         success: false,
