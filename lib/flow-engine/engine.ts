@@ -1,0 +1,605 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/types/database";
+import type {
+  FlowNode,
+  FlowEdge,
+  FlowExecutionContext,
+  SendMessageNodeData,
+  ConditionNodeData,
+  DelayNodeData,
+  TagNodeData,
+  SetFieldNodeData,
+  HttpRequestNodeData,
+  GoToFlowNodeData,
+  ABSplitNodeData,
+} from "./types";
+import { adaptMessage } from "./platform-adapter";
+import { createLateClient } from "@/lib/late-client";
+
+export async function executeFlow(
+  supabase: SupabaseClient<Database>,
+  context: FlowExecutionContext
+) {
+  // Check for active session waiting for input
+  const { data: activeSession } = await supabase
+    .from("flow_sessions")
+    .select("*")
+    .eq("contact_id", context.contactId)
+    .eq("channel_id", context.channelId)
+    .eq("status", "active")
+    .eq("waiting_for_input", true)
+    .single();
+
+  if (activeSession) {
+    return resumeSession(supabase, activeSession, context);
+  }
+
+  // Load flow
+  const { data: flow } = await supabase
+    .from("flows")
+    .select("*")
+    .eq("id", context.flowId)
+    .eq("status", "published")
+    .single();
+
+  if (!flow) return;
+
+  const nodes = flow.nodes as unknown as FlowNode[];
+  const edges = flow.edges as unknown as FlowEdge[];
+
+  // Get channel platform
+  const { data: channel } = await supabase
+    .from("channels")
+    .select("platform")
+    .eq("id", context.channelId)
+    .single();
+
+  context.platform = channel?.platform as FlowExecutionContext["platform"];
+
+  // Create session
+  const { data: session } = await supabase
+    .from("flow_sessions")
+    .insert({
+      contact_id: context.contactId,
+      flow_id: context.flowId,
+      channel_id: context.channelId,
+      status: "active",
+      variables: context.variables || {},
+    })
+    .select("id")
+    .single();
+
+  if (!session) return;
+
+  // Find the trigger node (entry point)
+  const triggerNode = nodes.find((n) => n.type === "trigger");
+  if (!triggerNode) return;
+
+  // Get the first connected node
+  const firstEdge = edges.find((e) => e.source === triggerNode.id);
+  if (!firstEdge) return;
+
+  const startNode = nodes.find((n) => n.id === firstEdge.target);
+  if (!startNode) return;
+
+  await traverseNodes(supabase, session.id, startNode, nodes, edges, context);
+}
+
+async function resumeSession(
+  supabase: SupabaseClient<Database>,
+  session: Database["public"]["Tables"]["flow_sessions"]["Row"],
+  context: FlowExecutionContext
+) {
+  const { data: flow } = await supabase
+    .from("flows")
+    .select("*")
+    .eq("id", session.flow_id)
+    .single();
+
+  if (!flow) return;
+
+  const nodes = flow.nodes as unknown as FlowNode[];
+  const edges = flow.edges as unknown as FlowEdge[];
+
+  const { data: channel } = await supabase
+    .from("channels")
+    .select("platform")
+    .eq("id", context.channelId)
+    .single();
+
+  context.platform = channel?.platform as FlowExecutionContext["platform"];
+  context.variables = (session.variables as Record<string, string>) || {};
+
+  // Update session
+  await supabase
+    .from("flow_sessions")
+    .update({ waiting_for_input: false })
+    .eq("id", session.id);
+
+  // Continue from current node
+  const currentNode = nodes.find((n) => n.id === session.current_node_id);
+  if (!currentNode) return;
+
+  // Get next node after the current one
+  const nextEdge = edges.find((e) => e.source === currentNode.id);
+  if (!nextEdge) {
+    await completeSession(supabase, session.id);
+    return;
+  }
+
+  const nextNode = nodes.find((n) => n.id === nextEdge.target);
+  if (!nextNode) {
+    await completeSession(supabase, session.id);
+    return;
+  }
+
+  await traverseNodes(supabase, session.id, nextNode, nodes, edges, context);
+}
+
+async function traverseNodes(
+  supabase: SupabaseClient<Database>,
+  sessionId: string,
+  node: FlowNode,
+  nodes: FlowNode[],
+  edges: FlowEdge[],
+  context: FlowExecutionContext
+) {
+  // Update current node
+  await supabase
+    .from("flow_sessions")
+    .update({ current_node_id: node.id })
+    .eq("id", sessionId);
+
+  // Track analytics
+  await supabase.from("analytics_events").insert({
+    workspace_id: context.workspaceId,
+    flow_id: context.flowId,
+    contact_id: context.contactId,
+    event_type: "node_executed",
+    metadata: { nodeId: node.id, nodeType: node.type },
+  });
+
+  // Execute the node
+  const result = await executeNode(supabase, node, context, sessionId);
+
+  // If the node pauses execution (delay, wait for input, human takeover), stop
+  if (result === "pause") return;
+
+  // Find next node(s)
+  let nextEdge: FlowEdge | undefined;
+
+  if (result && typeof result === "string" && result.startsWith("handle:")) {
+    // Condition/split nodes specify which handle to follow
+    const handle = result.replace("handle:", "");
+    nextEdge = edges.find(
+      (e) => e.source === node.id && e.sourceHandle === handle
+    );
+  } else {
+    nextEdge = edges.find((e) => e.source === node.id);
+  }
+
+  if (!nextEdge) {
+    await completeSession(supabase, sessionId);
+    return;
+  }
+
+  const nextNode = nodes.find((n) => n.id === nextEdge!.target);
+  if (!nextNode) {
+    await completeSession(supabase, sessionId);
+    return;
+  }
+
+  // Continue to next node
+  await traverseNodes(supabase, sessionId, nextNode, nodes, edges, context);
+}
+
+async function executeNode(
+  supabase: SupabaseClient<Database>,
+  node: FlowNode,
+  context: FlowExecutionContext,
+  sessionId: string
+): Promise<string | void> {
+  switch (node.type) {
+    case "sendMessage":
+      return executeSendMessage(supabase, node.data as SendMessageNodeData, context);
+    case "condition":
+      return executeCondition(supabase, node.data as ConditionNodeData, context);
+    case "delay":
+      return executeDelay(supabase, node.data as DelayNodeData, sessionId, node.id, context);
+    case "addTag":
+    case "removeTag":
+      return executeTag(supabase, node.data as TagNodeData, context);
+    case "setCustomField":
+      return executeSetField(supabase, node.data as SetFieldNodeData, context);
+    case "httpRequest":
+      return executeHttpRequest(node.data as HttpRequestNodeData, context);
+    case "goToFlow":
+      return executeGoToFlow(supabase, node.data as GoToFlowNodeData, context, sessionId);
+    case "humanTakeover":
+      return executeHumanTakeover(supabase, context, sessionId);
+    case "subscribe":
+    case "unsubscribe":
+      return executeSubscription(supabase, node.type, context);
+    case "abSplit":
+      return executeABSplit(node.data as ABSplitNodeData);
+    case "smartDelay":
+      // Wait for next input
+      await supabase
+        .from("flow_sessions")
+        .update({ waiting_for_input: true, current_node_id: node.id })
+        .eq("id", sessionId);
+      return "pause";
+    default:
+      return;
+  }
+}
+
+async function executeSendMessage(
+  supabase: SupabaseClient<Database>,
+  data: SendMessageNodeData,
+  context: FlowExecutionContext
+) {
+  // Get workspace for API key
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("late_api_key_encrypted")
+    .eq("id", context.workspaceId)
+    .single();
+
+  if (!workspace?.late_api_key_encrypted) return;
+
+  const late = createLateClient(workspace.late_api_key_encrypted);
+  const { data: channel } = await supabase
+    .from("channels")
+    .select("late_account_id, platform")
+    .eq("id", context.channelId)
+    .single();
+
+  if (!channel) return;
+
+  // Get the contact's platform sender ID
+  const { data: contactChannel } = await supabase
+    .from("contact_channels")
+    .select("platform_sender_id")
+    .eq("contact_id", context.contactId)
+    .eq("channel_id", context.channelId)
+    .single();
+
+  if (!contactChannel) return;
+
+  for (const msg of data.messages) {
+    const adapted = adaptMessage(msg, context.platform!);
+
+    try {
+      // Send via Late SDK
+      const response = await late.messages.send(channel.late_account_id, {
+        to: contactChannel.platform_sender_id,
+        text: interpolateVariables(adapted.text, context.variables || {}),
+        ...(adapted.imageUrl && { imageUrl: adapted.imageUrl }),
+      });
+
+      // Store outbound message
+      await supabase.from("messages").insert({
+        conversation_id: context.conversationId,
+        direction: "outbound",
+        text: adapted.text,
+        attachments: adapted.imageUrl
+          ? [{ type: "image", url: adapted.imageUrl }]
+          : null,
+        sent_by_flow_id: context.flowId,
+        sent_by_node_id: context.contactId,
+        platform_message_id: response?.id || null,
+        status: "sent",
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      await supabase.from("messages").insert({
+        conversation_id: context.conversationId,
+        direction: "outbound",
+        text: adapted.text,
+        sent_by_flow_id: context.flowId,
+        status: "failed",
+      });
+    }
+
+    // Small delay between messages
+    if (data.messages.length > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+}
+
+async function executeCondition(
+  supabase: SupabaseClient<Database>,
+  data: ConditionNodeData,
+  context: FlowExecutionContext
+): Promise<string> {
+  const { data: contact } = await supabase
+    .from("contacts")
+    .select("*, contact_tags(tag_id, tags(name)), contact_custom_fields(field_id, value, custom_field_definitions(slug))")
+    .eq("id", context.contactId)
+    .single();
+
+  if (!contact) return "handle:false";
+
+  const results = data.conditions.map((condition) => {
+    let fieldValue: string | undefined;
+
+    // Check built-in fields
+    if (condition.field === "platform") {
+      fieldValue = context.platform;
+    } else if (condition.field === "is_subscribed") {
+      fieldValue = String(contact.is_subscribed);
+    } else if (condition.field.startsWith("tag:")) {
+      const tagName = condition.field.replace("tag:", "");
+      const hasTags = Array.isArray(contact.contact_tags);
+      const hasTag = hasTags && (contact.contact_tags as Array<{ tags: { name: string } | null }>).some(
+        (ct) => ct.tags?.name === tagName
+      );
+      fieldValue = String(hasTag);
+    } else if (condition.field.startsWith("variable:")) {
+      const varName = condition.field.replace("variable:", "");
+      fieldValue = context.variables?.[varName];
+    } else {
+      // Check custom fields
+      const customFields = contact.contact_custom_fields as Array<{
+        value: string;
+        custom_field_definitions: { slug: string } | null;
+      }> | null;
+      const field = customFields?.find(
+        (f) => f.custom_field_definitions?.slug === condition.field
+      );
+      fieldValue = field?.value;
+    }
+
+    return evaluateCondition(fieldValue, condition.operator, condition.value);
+  });
+
+  const passed =
+    data.logic === "and" ? results.every(Boolean) : results.some(Boolean);
+
+  return passed ? "handle:true" : "handle:false";
+}
+
+function evaluateCondition(
+  actual: string | undefined,
+  operator: string,
+  expected: string
+): boolean {
+  switch (operator) {
+    case "equals":
+      return actual === expected;
+    case "not_equals":
+      return actual !== expected;
+    case "contains":
+      return actual?.includes(expected) || false;
+    case "exists":
+      return actual !== undefined && actual !== null && actual !== "";
+    case "gt":
+      return Number(actual) > Number(expected);
+    case "lt":
+      return Number(actual) < Number(expected);
+    default:
+      return false;
+  }
+}
+
+async function executeDelay(
+  supabase: SupabaseClient<Database>,
+  data: DelayNodeData,
+  sessionId: string,
+  nodeId: string,
+  context: FlowExecutionContext
+) {
+  const multipliers: Record<string, number> = {
+    seconds: 1000,
+    minutes: 60 * 1000,
+    hours: 60 * 60 * 1000,
+    days: 24 * 60 * 60 * 1000,
+  };
+
+  const delayMs = data.duration * (multipliers[data.unit] || 1000);
+  const runAt = new Date(Date.now() + delayMs).toISOString();
+
+  // Schedule a job to resume the flow
+  await supabase.from("scheduled_jobs").insert({
+    type: "resume_flow",
+    payload: {
+      sessionId,
+      nodeId,
+      flowId: context.flowId,
+      channelId: context.channelId,
+      contactId: context.contactId,
+      conversationId: context.conversationId,
+      workspaceId: context.workspaceId,
+    },
+    run_at: runAt,
+  });
+
+  // Update session to waiting
+  await supabase
+    .from("flow_sessions")
+    .update({
+      waiting_until: runAt,
+      current_node_id: nodeId,
+    })
+    .eq("id", sessionId);
+
+  return "pause";
+}
+
+async function executeTag(
+  supabase: SupabaseClient<Database>,
+  data: TagNodeData,
+  context: FlowExecutionContext
+) {
+  // Find or create tag
+  const { data: tag } = await supabase
+    .from("tags")
+    .upsert(
+      { workspace_id: context.workspaceId, name: data.tagName },
+      { onConflict: "workspace_id,name" }
+    )
+    .select("id")
+    .single();
+
+  if (!tag) return;
+
+  if (data.action === "add") {
+    await supabase
+      .from("contact_tags")
+      .upsert({ contact_id: context.contactId, tag_id: tag.id })
+      .select();
+  } else {
+    await supabase
+      .from("contact_tags")
+      .delete()
+      .eq("contact_id", context.contactId)
+      .eq("tag_id", tag.id);
+  }
+}
+
+async function executeSetField(
+  supabase: SupabaseClient<Database>,
+  data: SetFieldNodeData,
+  context: FlowExecutionContext
+) {
+  // Find field definition
+  const { data: fieldDef } = await supabase
+    .from("custom_field_definitions")
+    .select("id")
+    .eq("workspace_id", context.workspaceId)
+    .eq("slug", data.fieldSlug)
+    .single();
+
+  if (!fieldDef) return;
+
+  const value = interpolateVariables(data.value, context.variables || {});
+
+  await supabase.from("contact_custom_fields").upsert(
+    {
+      contact_id: context.contactId,
+      field_id: fieldDef.id,
+      value,
+    },
+    { onConflict: "contact_id,field_id" }
+  );
+}
+
+async function executeHttpRequest(
+  data: HttpRequestNodeData,
+  context: FlowExecutionContext
+) {
+  try {
+    const url = interpolateVariables(data.url, context.variables || {});
+    const body = data.body
+      ? interpolateVariables(data.body, context.variables || {})
+      : undefined;
+
+    const response = await fetch(url, {
+      method: data.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...data.headers,
+      },
+      body: data.method !== "GET" ? body : undefined,
+    });
+
+    const responseData = await response.text();
+
+    // Store response in variable if configured
+    if (data.responseVariable && context.variables) {
+      try {
+        context.variables[data.responseVariable] = JSON.parse(responseData);
+      } catch {
+        context.variables[data.responseVariable] = responseData;
+      }
+    }
+  } catch (error) {
+    console.error("HTTP request failed:", error);
+  }
+}
+
+async function executeGoToFlow(
+  supabase: SupabaseClient<Database>,
+  data: GoToFlowNodeData,
+  context: FlowExecutionContext,
+  _sessionId: string
+) {
+  // Execute the target flow
+  await executeFlow(supabase, {
+    ...context,
+    flowId: data.flowId,
+  });
+  // If returnAfter is true, the current flow will continue after the target flow completes
+  // For now, we just stop the current traversal
+  return "pause";
+}
+
+async function executeHumanTakeover(
+  supabase: SupabaseClient<Database>,
+  context: FlowExecutionContext,
+  sessionId: string
+) {
+  // Pause automation on the conversation
+  await supabase
+    .from("conversations")
+    .update({ is_automation_paused: true })
+    .eq("id", context.conversationId);
+
+  // Mark session
+  await supabase
+    .from("flow_sessions")
+    .update({
+      human_takeover_at: new Date().toISOString(),
+      status: "completed",
+    })
+    .eq("id", sessionId);
+
+  return "pause";
+}
+
+async function executeSubscription(
+  supabase: SupabaseClient<Database>,
+  action: string,
+  context: FlowExecutionContext
+) {
+  await supabase
+    .from("contacts")
+    .update({ is_subscribed: action === "subscribe" })
+    .eq("id", context.contactId);
+}
+
+function executeABSplit(data: ABSplitNodeData): string {
+  const totalWeight = data.paths.reduce((sum, p) => sum + p.weight, 0);
+  const random = Math.random() * totalWeight;
+
+  let cumulative = 0;
+  for (let i = 0; i < data.paths.length; i++) {
+    cumulative += data.paths[i].weight;
+    if (random <= cumulative) {
+      return `handle:${data.paths[i].name}`;
+    }
+  }
+
+  return `handle:${data.paths[0].name}`;
+}
+
+async function completeSession(
+  supabase: SupabaseClient<Database>,
+  sessionId: string
+) {
+  await supabase
+    .from("flow_sessions")
+    .update({ status: "completed" })
+    .eq("id", sessionId);
+}
+
+function interpolateVariables(
+  text: string,
+  variables: Record<string, unknown>
+): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    return String(variables[key] ?? `{{${key}}}`);
+  });
+}

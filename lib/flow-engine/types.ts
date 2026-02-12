@@ -1,0 +1,125 @@
+import type { NodeType, Platform } from "@/lib/types/database";
+
+export interface FlowNode {
+  id: string;
+  type: NodeType;
+  data: NodeData;
+  position: { x: number; y: number };
+}
+
+export interface FlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  label?: string;
+}
+
+export type NodeData =
+  | TriggerNodeData
+  | SendMessageNodeData
+  | ConditionNodeData
+  | DelayNodeData
+  | TagNodeData
+  | SetFieldNodeData
+  | HttpRequestNodeData
+  | GoToFlowNodeData
+  | HumanTakeoverNodeData
+  | ABSplitNodeData
+  | SmartDelayNodeData
+  | SubscribeNodeData;
+
+export interface TriggerNodeData {
+  triggerType: string;
+  keywords?: Array<{
+    value: string;
+    matchType: "exact" | "contains" | "startsWith";
+  }>;
+  payload?: string;
+}
+
+export interface SendMessageNodeData {
+  messages: Array<{
+    text?: string;
+    imageUrl?: string;
+    quickReplies?: Array<{ title: string; payload: string }>;
+    buttons?: Array<{
+      title: string;
+      type: "postback" | "url";
+      payload?: string;
+      url?: string;
+    }>;
+  }>;
+}
+
+export interface ConditionNodeData {
+  conditions: Array<{
+    field: string;
+    operator: "equals" | "not_equals" | "contains" | "exists" | "gt" | "lt";
+    value: string;
+  }>;
+  logic: "and" | "or";
+}
+
+export interface DelayNodeData {
+  duration: number;
+  unit: "seconds" | "minutes" | "hours" | "days";
+}
+
+export interface TagNodeData {
+  action: "add" | "remove";
+  tagName: string;
+}
+
+export interface SetFieldNodeData {
+  fieldSlug: string;
+  value: string;
+}
+
+export interface HttpRequestNodeData {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  url: string;
+  headers?: Record<string, string>;
+  body?: string;
+  responseVariable?: string;
+}
+
+export interface GoToFlowNodeData {
+  flowId: string;
+  returnAfter: boolean;
+}
+
+export interface HumanTakeoverNodeData {
+  message?: string;
+}
+
+export interface ABSplitNodeData {
+  paths: Array<{ name: string; weight: number }>;
+}
+
+export interface SmartDelayNodeData {
+  timeout: number;
+  timeoutUnit: "minutes" | "hours" | "days";
+}
+
+export interface SubscribeNodeData {
+  action: "subscribe" | "unsubscribe";
+}
+
+export interface FlowExecutionContext {
+  triggerId: string;
+  flowId: string;
+  channelId: string;
+  contactId: string;
+  conversationId: string;
+  workspaceId: string;
+  incomingMessage: {
+    text?: string;
+    postbackPayload?: string;
+    quickReplyPayload?: string;
+    callbackData?: string;
+    sender?: { id: string; name?: string; username?: string };
+  };
+  variables?: Record<string, string>;
+  platform?: Platform;
+}
