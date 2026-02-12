@@ -55,17 +55,17 @@ export async function matchTrigger(
 
     for (const trigger of triggers.filter((t) => t.type === "keyword")) {
       const config = trigger.config as {
-        keywords?: Array<{
-          value: string;
-          matchType?: "exact" | "contains" | "startsWith";
-        }>;
+        keywords?: Array<string | { value: string; matchType?: "exact" | "contains" | "startsWith" }>;
+        matchType?: "exact" | "contains" | "startsWith";
       };
 
       if (!config.keywords) continue;
 
       for (const kw of config.keywords) {
-        const keyword = kw.value.toLowerCase();
-        const matchType = kw.matchType || "contains";
+        // Support both formats: plain string or { value, matchType } object
+        const keyword = (typeof kw === "string" ? kw : kw.value).toLowerCase();
+        const matchType =
+          (typeof kw === "object" && kw.matchType) || config.matchType || "contains";
 
         if (matchType === "exact" && text === keyword) return trigger;
         if (matchType === "contains" && text.includes(keyword)) return trigger;
