@@ -156,22 +156,22 @@ async function processJob(
       const channel = recipient.channels as { late_account_id: string } | null;
       if (!channel) return;
 
-      // Get platform sender ID
-      const { data: contactChannel } = await supabase
-        .from("contact_channels")
-        .select("platform_sender_id")
+      // Get the conversation for this contact+channel (need late_conversation_id)
+      const { data: conv } = await supabase
+        .from("conversations")
+        .select("late_conversation_id")
         .eq("contact_id", recipient.contact_id)
         .eq("channel_id", recipient.channel_id)
         .single();
 
-      if (!contactChannel) return;
+      if (!conv?.late_conversation_id) return;
 
       const broadcastData = recipient.broadcasts as { message_content: { text?: string } } | null;
       const messageContent = broadcastData?.message_content;
 
       try {
         await late.messages.send(channel.late_account_id, {
-          to: contactChannel.platform_sender_id,
+          conversationId: conv.late_conversation_id,
           text: messageContent?.text || "",
         });
 

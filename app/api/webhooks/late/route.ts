@@ -4,18 +4,18 @@ import { executeFlow } from "@/lib/flow-engine/engine";
 import { matchTrigger } from "@/lib/flow-engine/trigger-matcher";
 import crypto from "crypto";
 
-// ── Late API webhook payload types ──────────────────────────────────────────
+// ── Late API webhook payload (actual shape from status-webhook.ts) ───────────
 
 interface WebhookPayload {
   event: string;
-  data: {
-    messageId: string;
+  message: {
+    id: string;
     conversationId: string;
     platform: string;
     platformMessageId: string;
-    direction: "incoming";
+    direction: string;
     text: string | null;
-    attachments: Array<{ type: string; url: string }> | null;
+    attachments: Array<{ type: string; url: string; payload?: string }>;
     sender: {
       id: string;
       name: string;
@@ -23,25 +23,30 @@ interface WebhookPayload {
       picture: string | null;
     };
     sentAt: string;
-    conversation: {
-      id: string;
-      participantId: string;
-      participantName: string;
-      participantUsername: string | null;
-      participantPicture: string | null;
-    };
-    account: {
-      id: string;
-      platform: string;
-      username: string;
-      displayName: string;
-    };
-    metadata: {
-      quickReplyPayload: string | null;
-      callbackData: string | null;
-      postbackPayload: string | null;
-    };
+    isRead: boolean;
   };
+  conversation: {
+    id: string;
+    platformConversationId: string | null;
+    participantId: string;
+    participantName: string;
+    participantUsername: string | null;
+    participantPicture: string | null;
+    status: string;
+  };
+  account: {
+    id: string;
+    platform: string;
+    username: string;
+    displayName: string;
+  };
+  metadata?: {
+    quickReplyPayload?: string;
+    callbackData?: string;
+    postbackPayload?: string;
+    postbackTitle?: string;
+  };
+  timestamp: string;
 }
 
 // ── Webhook handler ─────────────────────────────────────────────────────────
@@ -50,7 +55,6 @@ export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get("x-late-signature");
 
-  // Parse payload
   let payload: WebhookPayload;
   try {
     payload = JSON.parse(body);
@@ -63,15 +67,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
-  const { data: eventData } = payload;
+  const { message: msg, conversation: conv, account, metadata } = payload;
 
   const supabase = await createServiceClient();
 
-  // Look up channel by late_account_id (maps to data.account.id)
+  // Look up channel by late_account_id
   const { data: channel } = await supabase
     .from("channels")
     .select("*")
-    .eq("late_account_id", eventData.account.id)
+    .eq("late_account_id", account.id)
     .eq("is_active", true)
     .single();
 
@@ -108,11 +112,9 @@ export async function POST(request: NextRequest) {
 
   // ── Upsert contact ───────────────────────────────────────────────────────
 
-  const senderId = eventData.sender.id;
-  const senderName =
-    eventData.sender.name || eventData.sender.username || senderId;
+  const senderId = msg.sender.id;
+  const senderName = msg.sender.name || msg.sender.username || senderId;
 
-  // Find or create contact via contact_channels
   let contactId: string;
   const { data: existingContactChannel } = await supabase
     .from("contact_channels")
@@ -123,19 +125,17 @@ export async function POST(request: NextRequest) {
 
   if (existingContactChannel) {
     contactId = existingContactChannel.contact_id;
-    // Update last interaction
     await supabase
       .from("contacts")
       .update({ last_interaction_at: new Date().toISOString() })
       .eq("id", contactId);
   } else {
-    // Create new contact
     const { data: newContact } = await supabase
       .from("contacts")
       .insert({
         workspace_id: channel.workspace_id,
         display_name: senderName,
-        avatar_url: eventData.sender.picture || null,
+        avatar_url: msg.sender.picture || null,
         last_interaction_at: new Date().toISOString(),
       })
       .select("id")
@@ -150,18 +150,17 @@ export async function POST(request: NextRequest) {
 
     contactId = newContact.id;
 
-    // Link contact to channel
     await supabase.from("contact_channels").insert({
       contact_id: contactId,
       channel_id: channel.id,
       platform_sender_id: senderId,
-      platform_username: eventData.sender.username || null,
+      platform_username: msg.sender.username || null,
     });
   }
 
   // ── Upsert conversation ──────────────────────────────────────────────────
 
-  const messagePreview = (eventData.text || "").slice(0, 100);
+  const messagePreview = (msg.text || "").slice(0, 100);
 
   const { data: conversation } = await supabase
     .from("conversations")
@@ -171,7 +170,7 @@ export async function POST(request: NextRequest) {
         channel_id: channel.id,
         contact_id: contactId,
         platform: channel.platform,
-        late_conversation_id: eventData.conversation.id,
+        late_conversation_id: conv.id,
         status: "open",
         last_message_at: new Date().toISOString(),
         last_message_preview: messagePreview,
@@ -189,7 +188,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Increment unread count for existing conversations
   if (existingContactChannel) {
     await supabase
       .rpc("increment_unread", {
@@ -204,42 +202,44 @@ export async function POST(request: NextRequest) {
   await supabase.from("messages").insert({
     conversation_id: conversation.id,
     direction: "inbound",
-    text: eventData.text || null,
-    attachments: eventData.attachments || null,
-    quick_reply_payload: eventData.metadata.quickReplyPayload || null,
-    postback_payload: eventData.metadata.postbackPayload || null,
-    callback_data: eventData.metadata.callbackData || null,
-    platform_message_id: eventData.platformMessageId || null,
+    text: msg.text || null,
+    attachments: msg.attachments.length > 0 ? msg.attachments : null,
+    quick_reply_payload: metadata?.quickReplyPayload || null,
+    postback_payload: metadata?.postbackPayload || null,
+    callback_data: metadata?.callbackData || null,
+    platform_message_id: msg.platformMessageId || null,
     status: "delivered",
   });
 
   // ── Flow engine ───────────────────────────────────────────────────────────
 
   if (!conversation.is_automation_paused) {
-    // Build the message object used by the trigger matcher and flow engine
     const incomingMessage = {
-      text: eventData.text || undefined,
-      postbackPayload: eventData.metadata.postbackPayload || undefined,
-      quickReplyPayload: eventData.metadata.quickReplyPayload || undefined,
-      callbackData: eventData.metadata.callbackData || undefined,
+      text: msg.text || undefined,
+      postbackPayload: metadata?.postbackPayload || undefined,
+      quickReplyPayload: metadata?.quickReplyPayload || undefined,
+      callbackData: metadata?.callbackData || undefined,
       sender: {
-        id: eventData.sender.id,
-        name: eventData.sender.name,
-        username: eventData.sender.username || undefined,
+        id: msg.sender.id,
+        name: msg.sender.name,
+        username: msg.sender.username || undefined,
       },
     };
 
-    // Check global keywords first
     const handled = await handleGlobalKeywords(
       supabase,
       channel.workspace_id,
       contactId,
-      eventData.text || undefined
+      msg.text || undefined
     );
 
     if (!handled) {
-      // Match trigger and execute flow
-      const trigger = await matchTrigger(supabase, channel.id, conversation.id, incomingMessage);
+      const trigger = await matchTrigger(
+        supabase,
+        channel.id,
+        conversation.id,
+        incomingMessage
+      );
       if (trigger) {
         executeFlow(supabase, {
           triggerId: trigger.id,
@@ -249,6 +249,8 @@ export async function POST(request: NextRequest) {
           conversationId: conversation.id,
           workspaceId: channel.workspace_id,
           incomingMessage,
+          lateConversationId: conv.id,
+          lateAccountId: account.id,
         }).catch(console.error);
       }
     }
@@ -299,7 +301,6 @@ async function handleGlobalKeywords(
           .eq("id", contactId);
         return true;
       }
-      // flowId handling would trigger a flow
       return false;
     }
   }

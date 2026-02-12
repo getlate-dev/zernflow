@@ -72,8 +72,12 @@ export interface LatePost {
 }
 
 export interface LateSendMessageResponse {
-  id: string | null;
-  [key: string]: unknown;
+  success: boolean;
+  data: {
+    messageId: string;
+    conversationId?: string;
+    sentAt?: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -255,48 +259,32 @@ class LateClient {
 
   messages = {
     /**
-     * Send a direct message through the Late API.
-     *
-     * Posts to /v1/inbox/conversations/{conversationId}/messages when a
-     * conversationId is available, otherwise falls back to sending via
-     * the accountId + recipient.
+     * Send a message to a conversation via the Late API.
+     * Requires a conversationId (all messages go to existing conversations).
      */
     send: async (
       accountId: string,
       options: {
-        to: string;
+        conversationId: string;
         text?: string;
         imageUrl?: string;
-        conversationId?: string;
       }
-    ): Promise<{ id: string | null }> => {
+    ): Promise<{ messageId: string | null }> => {
       const body: Record<string, unknown> = {
         accountId,
         message: options.text || "",
       };
 
       if (options.imageUrl) {
-        body.attachments = [{ type: "image", url: options.imageUrl }];
+        body.attachment = options.imageUrl;
       }
 
-      // If we have a conversation ID, post directly to that conversation
-      if (options.conversationId) {
-        const res = await this.request<LateSendMessageResponse>(
-          "POST",
-          `/v1/inbox/conversations/${options.conversationId}/messages`,
-          { body }
-        );
-        return { id: res.id ?? null };
-      }
-
-      // Otherwise, include the recipient and let the API route the message
-      body.to = options.to;
       const res = await this.request<LateSendMessageResponse>(
         "POST",
-        "/v1/inbox/conversations/messages",
+        `/v1/inbox/conversations/${options.conversationId}/messages`,
         { body }
       );
-      return { id: res.id ?? null };
+      return { messageId: res.data?.messageId ?? null };
     },
   };
 

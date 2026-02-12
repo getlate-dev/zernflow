@@ -332,10 +332,9 @@ async function executeSendMessage(
         : undefined;
 
       const response = await late.messages.send(lateAccountId, {
-        to: context.contactId,
+        conversationId: lateConversationId,
         text,
         imageUrl: adapted.imageUrl,
-        conversationId: lateConversationId,
       });
 
       // Store outbound message
@@ -346,7 +345,7 @@ async function executeSendMessage(
         attachments: attachments || null,
         sent_by_flow_id: context.flowId,
         sent_by_node_id: context.contactId,
-        platform_message_id: response?.id || null,
+        platform_message_id: response?.messageId || null,
         status: "sent",
       });
     } catch (error) {
