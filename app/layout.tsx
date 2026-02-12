@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ZernFlow - Open Source Chatbot Builder",
   description:
-    "Visual chatbot flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit. Powered by Zernio.",
+    "Visual chatbot flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit. Powered by Late.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

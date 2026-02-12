@@ -3,12 +3,15 @@
 Open-source chatbot builder for social media. Visual flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Website](https://img.shields.io/badge/Website-zernflow.com-indigo)](https://zernflow.com)
+
+**Live at [zernflow.com](https://zernflow.com)**
 
 ## What is ZernFlow?
 
 ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, manage contacts, send broadcasts, and handle live chat conversations across 6 social media platforms.
 
-**Powered by [Zernio](https://zernio.com)** for OAuth, token refresh, rate limiting, and cross-platform messaging.
+**Powered by [Late](https://getlate.dev)** for OAuth, token refresh, rate limiting, and cross-platform messaging.
 
 ### Features
 
@@ -27,7 +30,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [Zernio](https://zernio.com) API key
+- A [Late](https://getlate.dev) API key
 
 ### Setup
 
@@ -53,13 +56,13 @@ Create a free project at [supabase.com](https://supabase.com). Then run the SQL 
 cp .env.example .env
 ```
 
-Fill in your Supabase and Zernio API credentials:
+Fill in your Supabase and Late API credentials:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-LATE_API_KEY=your-zernio-api-key
+LATE_API_KEY=your-late-api-key
 ```
 
 4. **Run**
@@ -84,7 +87,7 @@ Recv.  Engine     Chat
    |    |    |    |    |
    +----+----+----+----+
         |         |
-    Supabase    Zernio
+    Supabase   Late API
   (PG + Auth   (6 platforms)
   + Realtime)
 ```
@@ -93,11 +96,11 @@ Recv.  Engine     Chat
 
 | Layer | Tool |
 |-------|------|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router, Turbopack) |
 | Database + Auth + Realtime | Supabase |
-| Flow Builder | React Flow |
-| UI | Tailwind CSS |
-| Messaging | Zernio API SDK |
+| Flow Builder | React Flow (@xyflow/react) |
+| UI | Tailwind CSS 4 |
+| Messaging | [Late API](https://getlate.dev) |
 
 ## Flow Node Types
 
