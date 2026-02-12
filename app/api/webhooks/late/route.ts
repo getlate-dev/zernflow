@@ -52,6 +52,18 @@ interface WebhookPayload {
 // ── Webhook handler ─────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  try {
+    return await handleWebhook(request);
+  } catch (err) {
+    console.error("Webhook handler error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+async function handleWebhook(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get("x-late-signature");
 
