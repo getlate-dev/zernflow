@@ -344,7 +344,7 @@ async function executeSendMessage(
         text,
         attachments: attachments || null,
         sent_by_flow_id: context.flowId,
-        sent_by_node_id: context.contactId,
+        sent_by_node_id: null,
         platform_message_id: response?.messageId || null,
         status: "sent",
       });

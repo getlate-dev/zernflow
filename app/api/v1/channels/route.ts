@@ -21,13 +21,11 @@ async function getWorkspace(supabase: Awaited<ReturnType<typeof createClient>>) 
 
 function getWebhookUrl(): string {
   const base =
-    process.env.NEXT_PUBLIC_VERCEL_URL ||
-    process.env.VERCEL_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
     "http://localhost:3000";
 
-  // Ensure https in production (Vercel env vars don't include protocol)
-  const url = base.startsWith("http") ? base : `https://${base}`;
-  return `${url}/api/webhooks/late`;
+  return `${base}/api/webhooks/late`;
 }
 
 export async function GET() {
