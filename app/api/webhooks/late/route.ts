@@ -253,22 +253,28 @@ async function handleWebhook(request: NextRequest) {
         incomingMessage
       );
       if (trigger) {
-        executeFlow(supabase, {
-          triggerId: trigger.id,
-          flowId: trigger.flow_id,
-          channelId: channel.id,
-          contactId,
-          conversationId: conversation.id,
-          workspaceId: channel.workspace_id,
-          incomingMessage,
-          lateConversationId: conv.id,
-          lateAccountId: account.id,
-        }).catch(console.error);
+        try {
+          await executeFlow(supabase, {
+            triggerId: trigger.id,
+            flowId: trigger.flow_id,
+            channelId: channel.id,
+            contactId,
+            conversationId: conversation.id,
+            workspaceId: channel.workspace_id,
+            incomingMessage,
+            lateConversationId: conv.id,
+            lateAccountId: account.id,
+          });
+        } catch (flowErr) {
+          console.error("Flow execution error:", flowErr);
+        }
+        return NextResponse.json({ ok: true, triggerMatched: trigger.id, flowId: trigger.flow_id });
       }
+      return NextResponse.json({ ok: true, triggerMatched: false });
     }
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, automationPaused: conversation.is_automation_paused });
 }
 
 // ── Global keywords ─────────────────────────────────────────────────────────
