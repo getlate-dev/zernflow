@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Paperclip, Bot, User, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import type { Database, MessageDirection } from "@/lib/types/database";
+import type { Database } from "@/lib/types/database";
 
 type Message = Database["public"]["Tables"]["messages"]["Row"];
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"] & {
@@ -151,8 +151,20 @@ export function MessageThread({
         (payload) => {
           const newMessage = payload.new as Message;
           setMessages((prev) => {
-            // Avoid duplicates (from optimistic updates)
+            // If this message already exists (from API response), skip
             if (prev.some((m) => m.id === newMessage.id)) return prev;
+            // If there's an optimistic message with matching text, replace it
+            const optimisticIdx = prev.findIndex(
+              (m) =>
+                m.id.startsWith("optimistic-") &&
+                m.text === newMessage.text &&
+                m.direction === newMessage.direction
+            );
+            if (optimisticIdx !== -1) {
+              const updated = [...prev];
+              updated[optimisticIdx] = newMessage;
+              return updated;
+            }
             return [...prev, newMessage];
           });
         }
@@ -186,41 +198,52 @@ export function MessageThread({
     setInput("");
     setSending(true);
 
+    // Optimistic update: add a temporary message immediately
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      conversation_id: conversation.id,
+      direction: "outbound",
+      text,
+      attachments: null,
+      quick_reply_payload: null,
+      postback_payload: null,
+      callback_data: null,
+      platform_message_id: null,
+      sent_by_flow_id: null,
+      sent_by_node_id: null,
+      sent_by_user_id: null,
+      status: "pending",
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticMessage]);
+
     try {
-      const supabase = createClient();
+      const res = await fetch("/api/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: conversation.id, text }),
+      });
 
-      // Insert the message
-      const { data: newMessage, error } = await supabase
-        .from("messages")
-        .insert({
-          conversation_id: conversation.id,
-          direction: "outbound" as MessageDirection,
-          text,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Optimistic update
-      if (newMessage) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === newMessage.id)) return prev;
-          return [...prev, newMessage];
-        });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Send failed (${res.status})`);
       }
 
-      // Update conversation preview
-      await supabase
-        .from("conversations")
-        .update({
-          last_message_at: new Date().toISOString(),
-          last_message_preview: text.substring(0, 100),
-        })
-        .eq("id", conversation.id);
+      const confirmedMessage: Message = await res.json();
+
+      // Replace optimistic message with confirmed one
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimisticId ? confirmedMessage : m))
+      );
     } catch (err) {
       console.error("Failed to send message:", err);
+      // Mark optimistic message as failed
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === optimisticId ? { ...m, status: "failed" as const } : m
+        )
+      );
     } finally {
       setSending(false);
     }

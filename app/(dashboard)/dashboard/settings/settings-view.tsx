@@ -11,6 +11,9 @@ import {
   Check,
   Eye,
   EyeOff,
+  Plug,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +23,12 @@ interface WorkspaceSettings {
   name: string;
   hasApiKey: boolean;
   globalKeywords: string[];
+}
+
+interface TestResult {
+  success: boolean;
+  accountCount?: number;
+  error?: string;
 }
 
 export function SettingsView({
@@ -35,6 +44,8 @@ export function SettingsView({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   function addKeyword() {
     const trimmed = newKeyword.trim().toLowerCase();
@@ -49,6 +60,49 @@ export function SettingsView({
 
   function removeKeyword(kw: string) {
     setKeywords((prev) => prev.filter((k) => k !== kw));
+  }
+
+  async function handleTestConnection() {
+    const keyToTest = apiKey.trim();
+    if (!keyToTest) return;
+
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("https://getlate.dev/api/v1/accounts", {
+        headers: {
+          Authorization: `Bearer ${keyToTest}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setTestResult({
+          success: false,
+          error:
+            res.status === 401
+              ? "Invalid API key. Please check your key and try again."
+              : `Connection failed (${res.status}). ${body?.error || ""}`.trim(),
+        });
+        return;
+      }
+
+      const data = await res.json();
+      const accounts = data.accounts || [];
+      setTestResult({
+        success: true,
+        accountCount: accounts.length,
+      });
+    } catch {
+      setTestResult({
+        success: false,
+        error: "Could not reach the Late API. Please check your network connection.",
+      });
+    } finally {
+      setTesting(false);
+    }
   }
 
   async function handleSave() {
@@ -79,6 +133,7 @@ export function SettingsView({
 
       setSaved(true);
       setApiKey("");
+      setTestResult(null);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error("Failed to save settings:", err);
@@ -132,11 +187,38 @@ export function SettingsView({
               Your Late API key is used to connect with social media platforms.
               {workspace.hasApiKey && " A key is currently configured."}
             </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              You can get your API key from your{" "}
+              <a
+                href="https://getlate.dev/dashboard/settings/api"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                Late dashboard
+                <ExternalLink className="h-3 w-3" />
+              </a>
+              . Sign up at{" "}
+              <a
+                href="https://getlate.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                getlate.dev
+              </a>{" "}
+              if you don&apos;t have an account yet.
+            </p>
+
             <div className="mt-4 relative">
               <input
                 type={showApiKey ? "text" : "password"}
                 value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
+                onChange={(e) => {
+                  setApiKey(e.target.value);
+                  // Clear test result when key changes
+                  if (testResult) setTestResult(null);
+                }}
                 placeholder={
                   workspace.hasApiKey
                     ? "Enter a new key to replace the current one"
@@ -156,7 +238,39 @@ export function SettingsView({
                 )}
               </button>
             </div>
-            {workspace.hasApiKey && (
+
+            {/* Test Connection button */}
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                onClick={handleTestConnection}
+                disabled={!apiKey.trim() || testing}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plug className="h-3.5 w-3.5" />
+                )}
+                {testing ? "Testing..." : "Test Connection"}
+              </button>
+
+              {testResult && testResult.success && (
+                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <Check className="h-3.5 w-3.5" />
+                  Connected ({testResult.accountCount}{" "}
+                  {testResult.accountCount === 1 ? "account" : "accounts"}{" "}
+                  found)
+                </span>
+              )}
+
+              {testResult && !testResult.success && (
+                <span className="text-xs text-red-600 dark:text-red-400">
+                  {testResult.error}
+                </span>
+              )}
+            </div>
+
+            {workspace.hasApiKey && !testResult && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                 <Check className="h-3 w-3" />
                 API key configured

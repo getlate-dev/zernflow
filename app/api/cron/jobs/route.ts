@@ -95,6 +95,8 @@ async function processJob(
         conversationId: string;
         workspaceId: string;
         nodeId: string;
+        lateConversationId?: string | null;
+        lateAccountId?: string | null;
       };
 
       // Check if session is still active
@@ -114,6 +116,8 @@ async function processJob(
         contactId: payload.contactId,
         conversationId: payload.conversationId,
         workspaceId: payload.workspaceId,
+        lateConversationId: payload.lateConversationId || undefined,
+        lateAccountId: payload.lateAccountId || undefined,
         incomingMessage: {},
       });
       break;

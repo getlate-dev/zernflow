@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import { MessageThread } from "@/components/inbox/message-thread";
 import { ContactPanel } from "@/components/inbox/contact-panel";
@@ -24,6 +24,11 @@ export function InboxView({
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showContactPanel, setShowContactPanel] = useState(true);
 
+  // Keep selected conversation in sync when conversation list updates
+  const handleSelect = useCallback((c: Conversation) => {
+    setSelected(c);
+  }, []);
+
   // Load messages when a conversation is selected
   useEffect(() => {
     if (!selected) {
@@ -33,20 +38,27 @@ export function InboxView({
 
     async function loadMessages() {
       setLoadingMessages(true);
-      const supabase = createClient();
-
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", selected!.id)
-        .order("created_at", { ascending: true })
-        .limit(100);
-
-      setMessages(data ?? []);
-      setLoadingMessages(false);
+      try {
+        const res = await fetch(
+          `/api/v1/messages?conversationId=${selected!.id}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setMessages(data ?? []);
+        } else {
+          console.error("Failed to load messages:", res.status);
+          setMessages([]);
+        }
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+        setMessages([]);
+      } finally {
+        setLoadingMessages(false);
+      }
 
       // Mark as read
       if (selected!.unread_count > 0) {
+        const supabase = createClient();
         await supabase
           .from("conversations")
           .update({ unread_count: 0 })
@@ -65,7 +77,7 @@ export function InboxView({
           conversations={conversations}
           workspaceId={workspaceId}
           selectedId={selected?.id ?? null}
-          onSelect={(c) => setSelected(c)}
+          onSelect={handleSelect}
         />
       </div>
 

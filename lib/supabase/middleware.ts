@@ -29,30 +29,40 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/register";
-  const isPublicPage =
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname === "/auth/callback";
-  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
-  const isWebhook = request.nextUrl.pathname.startsWith("/api/webhooks/");
+  const pathname = request.nextUrl.pathname;
 
-  // Allow webhooks and public API routes through
-  if (isWebhook) return supabaseResponse;
+  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAuthCallback = pathname === "/auth/callback";
+  const isDashboard = pathname.startsWith("/dashboard");
+  const isApiRoute = pathname.startsWith("/api/");
 
-  // Redirect logged-in users away from auth pages
+  // Auth callback and API routes (including webhooks) always pass through
+  if (isAuthCallback || isApiRoute) {
+    return supabaseResponse;
+  }
+
+  // Redirect logged-in users away from auth pages to dashboard
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Forward any refreshed session cookies
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
-  // Redirect unauthenticated users to login
-  if (!user && !isAuthPage && !isPublicPage && !isApiRoute) {
+  // Redirect unauthenticated users trying to access dashboard to login
+  if (!user && isDashboard) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Forward any refreshed session cookies
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
   return supabaseResponse;

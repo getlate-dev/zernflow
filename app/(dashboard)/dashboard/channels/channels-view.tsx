@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plug,
   Plus,
   Power,
   PowerOff,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +16,16 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database, Platform } from "@/lib/types/database";
 
 type Channel = Database["public"]["Tables"]["channels"]["Row"];
+
+interface LateAccount {
+  _id: string;
+  platform: string;
+  username: string;
+  displayName: string;
+  profileUrl: string | null;
+  isActive: boolean;
+  status: string;
+}
 
 const platformConfig: Record<
   Platform,
@@ -50,32 +63,79 @@ const platformConfig: Record<
   },
 };
 
-const platformIcons: Record<Platform, string> = {
+const platformIcons: Record<string, string> = {
   facebook: "f",
   instagram: "ig",
   twitter: "X",
   telegram: "tg",
   bluesky: "bs",
   reddit: "r",
+  tiktok: "tk",
+  youtube: "yt",
+  linkedin: "in",
+  threads: "th",
 };
+
+function getPlatformLabel(platform: string): string {
+  return (
+    platformConfig[platform as Platform]?.label ||
+    platform.charAt(0).toUpperCase() + platform.slice(1)
+  );
+}
+
+function getPlatformColor(platform: string): string {
+  return (
+    platformConfig[platform as Platform]?.color || "text-foreground"
+  );
+}
+
+function getPlatformBgColor(platform: string): string {
+  return (
+    platformConfig[platform as Platform]?.bgColor || "bg-muted"
+  );
+}
 
 export function ChannelsView({
   channels: initialChannels,
-  workspaceId,
 }: {
   channels: Channel[];
   workspaceId: string;
 }) {
   const [channels, setChannels] = useState(initialChannels);
   const [showConnect, setShowConnect] = useState(false);
-  const [connectForm, setConnectForm] = useState({
-    platform: "instagram" as Platform,
-    late_account_id: "",
-    username: "",
-    display_name: "",
-  });
-  const [connecting, setConnecting] = useState(false);
+  const [availableAccounts, setAvailableAccounts] = useState<LateAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const fetchAvailableAccounts = useCallback(async () => {
+    setLoadingAccounts(true);
+    setAccountsError(null);
+
+    try {
+      const res = await fetch("/api/v1/channels/available");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to fetch accounts (${res.status})`);
+      }
+      const data = await res.json();
+      setAvailableAccounts(data.accounts ?? []);
+    } catch (err) {
+      setAccountsError(
+        err instanceof Error ? err.message : "Failed to fetch accounts"
+      );
+    } finally {
+      setLoadingAccounts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showConnect) {
+      fetchAvailableAccounts();
+    }
+  }, [showConnect, fetchAvailableAccounts]);
 
   async function handleToggleActive(channel: Channel) {
     setTogglingId(channel.id);
@@ -96,40 +156,35 @@ export function ChannelsView({
     setTogglingId(null);
   }
 
-  async function handleConnect() {
-    if (!connectForm.late_account_id.trim() || connecting) return;
-    setConnecting(true);
+  async function handleConnect(account: LateAccount) {
+    if (connectingId) return;
+    setConnectingId(account._id);
+    setConnectError(null);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("channels")
-        .insert({
-          workspace_id: workspaceId,
-          platform: connectForm.platform,
-          late_account_id: connectForm.late_account_id.trim(),
-          username: connectForm.username.trim() || null,
-          display_name: connectForm.display_name.trim() || null,
-          is_active: true,
-        })
-        .select()
-        .single();
+      const res = await fetch("/api/v1/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lateAccountId: account._id }),
+      });
 
-      if (error) throw error;
-      if (data) {
-        setChannels((prev) => [data, ...prev]);
-        setShowConnect(false);
-        setConnectForm({
-          platform: "instagram",
-          late_account_id: "",
-          username: "",
-          display_name: "",
-        });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to connect (${res.status})`);
       }
+
+      const channel = await res.json();
+      setChannels((prev) => [channel, ...prev]);
+      // Remove connected account from available list
+      setAvailableAccounts((prev) =>
+        prev.filter((a) => a._id !== account._id)
+      );
     } catch (err) {
-      console.error("Failed to connect channel:", err);
+      setConnectError(
+        err instanceof Error ? err.message : "Failed to connect channel"
+      );
     } finally {
-      setConnecting(false);
+      setConnectingId(null);
     }
   }
 
@@ -145,127 +200,149 @@ export function ChannelsView({
             </p>
           </div>
           <button
-            onClick={() => setShowConnect(true)}
+            onClick={() => setShowConnect(!showConnect)}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
-            <Plus className="h-4 w-4" />
-            Connect Channel
+            {showConnect ? (
+              <>
+                <X className="h-4 w-4" />
+                Close
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                Connect Channel
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Connect dialog */}
+      {/* Connect panel: available Late accounts */}
       {showConnect && (
         <div className="border-b border-border bg-card px-8 py-6">
-          <div className="mx-auto max-w-lg">
+          <div className="mx-auto max-w-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Connect a new channel</h2>
+              <h2 className="text-sm font-semibold">
+                Available accounts from Late
+              </h2>
               <button
-                onClick={() => setShowConnect(false)}
-                className="rounded-md p-1 text-muted-foreground hover:bg-accent"
+                onClick={fetchAvailableAccounts}
+                disabled={loadingAccounts}
+                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent disabled:opacity-50"
               >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {/* Platform select */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Platform
-                </label>
-                <div className="mt-1.5 flex flex-wrap gap-2">
-                  {(Object.keys(platformConfig) as Platform[]).map(
-                    (platform) => (
-                      <button
-                        key={platform}
-                        onClick={() =>
-                          setConnectForm((f) => ({ ...f, platform }))
-                        }
-                        className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-                          connectForm.platform === platform
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border hover:bg-accent"
-                        )}
-                      >
-                        {platformConfig[platform].label}
-                      </button>
-                    )
+                <RefreshCw
+                  className={cn(
+                    "h-3 w-3",
+                    loadingAccounts && "animate-spin"
                   )}
-                </div>
-              </div>
-
-              {/* Late Account ID */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Late Account ID
-                </label>
-                <input
-                  type="text"
-                  value={connectForm.late_account_id}
-                  onChange={(e) =>
-                    setConnectForm((f) => ({
-                      ...f,
-                      late_account_id: e.target.value,
-                    }))
-                  }
-                  placeholder="The social account ID from Late"
-                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
-              </div>
-
-              {/* Username */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Username (optional)
-                </label>
-                <input
-                  type="text"
-                  value={connectForm.username}
-                  onChange={(e) =>
-                    setConnectForm((f) => ({
-                      ...f,
-                      username: e.target.value,
-                    }))
-                  }
-                  placeholder="@username"
-                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              {/* Display Name */}
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Display Name (optional)
-                </label>
-                <input
-                  type="text"
-                  value={connectForm.display_name}
-                  onChange={(e) =>
-                    setConnectForm((f) => ({
-                      ...f,
-                      display_name: e.target.value,
-                    }))
-                  }
-                  placeholder="Page or account name"
-                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              <button
-                onClick={handleConnect}
-                disabled={!connectForm.late_account_id.trim() || connecting}
-                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-              >
-                {connecting ? "Connecting..." : "Connect Channel"}
+                Refresh
               </button>
             </div>
+
+            {/* Error */}
+            {accountsError && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {accountsError}
+                </p>
+              </div>
+            )}
+
+            {/* Connect error */}
+            {connectError && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {connectError}
+                </p>
+              </div>
+            )}
+
+            {/* Loading */}
+            {loadingAccounts && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Fetching accounts...
+                </span>
+              </div>
+            )}
+
+            {/* Account list */}
+            {!loadingAccounts && !accountsError && (
+              <div className="mt-4 space-y-2">
+                {availableAccounts.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    No additional accounts available. All your Late accounts are
+                    already connected, or no accounts were found.
+                  </p>
+                ) : (
+                  availableAccounts.map((account) => {
+                    const isConnecting = connectingId === account._id;
+                    return (
+                      <div
+                        key={account._id}
+                        className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:bg-accent/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold",
+                              getPlatformBgColor(account.platform),
+                              getPlatformColor(account.platform)
+                            )}
+                          >
+                            {platformIcons[account.platform] ||
+                              account.platform.slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {account.displayName || account.username}
+                            </p>
+                            {account.username && (
+                              <p className="text-xs text-muted-foreground">
+                                @{account.username}
+                              </p>
+                            )}
+                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                              {getPlatformLabel(account.platform)}
+                              {account.status && account.status !== "active"
+                                ? ` (${account.status})`
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleConnect(account)}
+                          disabled={!!connectingId}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                        >
+                          {isConnecting ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Connecting...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3" />
+                              Connect
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Channel cards */}
+      {/* Connected channel cards */}
       <div className="flex-1 overflow-auto p-8">
         {channels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
@@ -274,13 +351,16 @@ export function ChannelsView({
               No channels connected
             </p>
             <p className="mt-1 text-xs text-muted-foreground/70">
-              Connect your first social media channel to start receiving messages
+              Connect your first social media channel to start receiving
+              messages
             </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {channels.map((channel) => {
-              const config = platformConfig[channel.platform];
+              const label = getPlatformLabel(channel.platform);
+              const color = getPlatformColor(channel.platform);
+              const bgColor = getPlatformBgColor(channel.platform);
               return (
                 <div
                   key={channel.id}
@@ -292,15 +372,18 @@ export function ChannelsView({
                       <div
                         className={cn(
                           "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold",
-                          config.bgColor,
-                          config.color
+                          bgColor,
+                          color
                         )}
                       >
-                        {platformIcons[channel.platform]}
+                        {platformIcons[channel.platform] ||
+                          channel.platform.slice(0, 2)}
                       </div>
                       <div>
                         <p className="text-sm font-medium">
-                          {channel.display_name ?? channel.username ?? config.label}
+                          {channel.display_name ??
+                            channel.username ??
+                            label}
                         </p>
                         {channel.username && (
                           <p className="text-xs text-muted-foreground">
@@ -308,7 +391,7 @@ export function ChannelsView({
                           </p>
                         )}
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {config.label}
+                          {label}
                         </p>
                       </div>
                     </div>
@@ -350,7 +433,9 @@ export function ChannelsView({
                       <span
                         className={cn(
                           "h-1.5 w-1.5 rounded-full",
-                          channel.is_active ? "bg-green-500" : "bg-muted-foreground"
+                          channel.is_active
+                            ? "bg-green-500"
+                            : "bg-muted-foreground"
                         )}
                       />
                       {channel.is_active ? "Active" : "Inactive"}

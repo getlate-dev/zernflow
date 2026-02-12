@@ -49,14 +49,30 @@ export async function executeFlow(
   const nodes = flow.nodes as unknown as FlowNode[];
   const edges = flow.edges as unknown as FlowEdge[];
 
-  // Get channel platform
+  // Get channel platform and late_account_id
   const { data: channel } = await supabase
     .from("channels")
-    .select("platform")
+    .select("platform, late_account_id")
     .eq("id", context.channelId)
     .single();
 
   context.platform = channel?.platform as FlowExecutionContext["platform"];
+  if (channel?.late_account_id && !context.lateAccountId) {
+    context.lateAccountId = channel.late_account_id;
+  }
+
+  // Resolve late_conversation_id from the conversation record if not already set
+  if (!context.lateConversationId && context.conversationId) {
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("late_conversation_id")
+      .eq("id", context.conversationId)
+      .single();
+
+    if (conversation?.late_conversation_id) {
+      context.lateConversationId = conversation.late_conversation_id;
+    }
+  }
 
   // Create session
   const { data: session } = await supabase
@@ -105,11 +121,28 @@ async function resumeSession(
 
   const { data: channel } = await supabase
     .from("channels")
-    .select("platform")
+    .select("platform, late_account_id")
     .eq("id", context.channelId)
     .single();
 
   context.platform = channel?.platform as FlowExecutionContext["platform"];
+  if (channel?.late_account_id && !context.lateAccountId) {
+    context.lateAccountId = channel.late_account_id;
+  }
+
+  // Resolve late_conversation_id if not set
+  if (!context.lateConversationId && context.conversationId) {
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("late_conversation_id")
+      .eq("id", context.conversationId)
+      .single();
+
+    if (conversation?.late_conversation_id) {
+      context.lateConversationId = conversation.late_conversation_id;
+    }
+  }
+
   context.variables = (session.variables as Record<string, string>) || {};
 
   // Update session
@@ -255,43 +288,62 @@ async function executeSendMessage(
   if (!workspace?.late_api_key_encrypted) return;
 
   const late = createLateClient(workspace.late_api_key_encrypted);
-  const { data: channel } = await supabase
-    .from("channels")
-    .select("late_account_id, platform")
-    .eq("id", context.channelId)
-    .single();
 
-  if (!channel) return;
+  // Resolve late_account_id from channel if not in context
+  let lateAccountId = context.lateAccountId;
+  if (!lateAccountId) {
+    const { data: channel } = await supabase
+      .from("channels")
+      .select("late_account_id, platform")
+      .eq("id", context.channelId)
+      .single();
 
-  // Get the contact's platform sender ID
-  const { data: contactChannel } = await supabase
-    .from("contact_channels")
-    .select("platform_sender_id")
-    .eq("contact_id", context.contactId)
-    .eq("channel_id", context.channelId)
-    .single();
+    if (!channel) return;
+    lateAccountId = channel.late_account_id;
+    if (!context.platform) {
+      context.platform = channel.platform as FlowExecutionContext["platform"];
+    }
+  }
 
-  if (!contactChannel) return;
+  // Resolve late_conversation_id from conversation if not in context
+  let lateConversationId = context.lateConversationId;
+  if (!lateConversationId) {
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("late_conversation_id")
+      .eq("id", context.conversationId)
+      .single();
+
+    if (!conversation?.late_conversation_id) {
+      console.error("No late_conversation_id found for conversation:", context.conversationId);
+      return;
+    }
+    lateConversationId = conversation.late_conversation_id;
+  }
 
   for (const msg of data.messages) {
     const adapted = adaptMessage(msg, context.platform!);
+    const text = interpolateVariables(adapted.text, context.variables || {});
 
     try {
-      // Send via Late SDK
-      const response = await late.messages.send(channel.late_account_id, {
-        to: contactChannel.platform_sender_id,
-        text: interpolateVariables(adapted.text, context.variables || {}),
-        ...(adapted.imageUrl && { imageUrl: adapted.imageUrl }),
+      // Send via Late REST API
+      const attachments = adapted.imageUrl
+        ? [{ type: "image", url: adapted.imageUrl }]
+        : undefined;
+
+      const response = await late.messages.send(lateAccountId, {
+        to: context.contactId,
+        text,
+        imageUrl: adapted.imageUrl,
+        conversationId: lateConversationId,
       });
 
       // Store outbound message
       await supabase.from("messages").insert({
         conversation_id: context.conversationId,
         direction: "outbound",
-        text: adapted.text,
-        attachments: adapted.imageUrl
-          ? [{ type: "image", url: adapted.imageUrl }]
-          : null,
+        text,
+        attachments: attachments || null,
         sent_by_flow_id: context.flowId,
         sent_by_node_id: context.contactId,
         platform_message_id: response?.id || null,
@@ -302,7 +354,7 @@ async function executeSendMessage(
       await supabase.from("messages").insert({
         conversation_id: context.conversationId,
         direction: "outbound",
-        text: adapted.text,
+        text,
         sent_by_flow_id: context.flowId,
         status: "failed",
       });
@@ -418,6 +470,8 @@ async function executeDelay(
       contactId: context.contactId,
       conversationId: context.conversationId,
       workspaceId: context.workspaceId,
+      lateConversationId: context.lateConversationId || null,
+      lateAccountId: context.lateAccountId || null,
     },
     run_at: runAt,
   });
@@ -593,7 +647,7 @@ function executeABSplit(data: ABSplitNodeData): string {
 
 /**
  * Post a public reply to the comment that triggered this flow.
- * Uses the comment_text and post_id variables set by the comment processor.
+ * Uses the comment_id and post_id variables set by the comment processor.
  */
 async function executeCommentReply(
   supabase: SupabaseClient<Database>,
@@ -609,27 +663,38 @@ async function executeCommentReply(
   if (!workspace?.late_api_key_encrypted) return;
 
   const late = createLateClient(workspace.late_api_key_encrypted);
-  const { data: channel } = await supabase
-    .from("channels")
-    .select("platform")
-    .eq("id", context.channelId)
-    .single();
 
-  if (!channel) return;
+  // Resolve late_account_id
+  let lateAccountId = context.lateAccountId;
+  if (!lateAccountId) {
+    const { data: channel } = await supabase
+      .from("channels")
+      .select("late_account_id")
+      .eq("id", context.channelId)
+      .single();
 
-  // The incoming message sender ID is used as the comment ID for reply
-  // The comment processor sets incomingMessage.sender.id to the commenter's platform ID
-  // and variables.comment_id if available
+    if (!channel) return;
+    lateAccountId = channel.late_account_id;
+  }
+
   const commentId = context.variables?.comment_id || context.incomingMessage.sender?.id;
   if (!commentId) return;
+
+  const postId = context.variables?.post_id;
+  if (!postId) {
+    console.error("No post_id in context variables for commentReply node");
+    return;
+  }
 
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
     await late.comments.reply({
-      commentId,
-      platforms: [channel.platform],
+      postId,
+      accountId: lateAccountId,
       comment: text,
+      commentId,
+      platforms: [context.platform!],
     });
   } catch (error) {
     console.error("Failed to post comment reply:", error);
@@ -637,8 +702,8 @@ async function executeCommentReply(
 }
 
 /**
- * Send a private DM to the commenter.
- * This is essentially the same as sendMessage but specifically for private replies.
+ * Send a private DM to the commenter via the Late API's private reply endpoint.
+ * This creates a DM conversation from a comment context.
  */
 async function executePrivateReply(
   supabase: SupabaseClient<Database>,
@@ -654,30 +719,37 @@ async function executePrivateReply(
   if (!workspace?.late_api_key_encrypted) return;
 
   const late = createLateClient(workspace.late_api_key_encrypted);
-  const { data: channel } = await supabase
-    .from("channels")
-    .select("late_account_id, platform")
-    .eq("id", context.channelId)
-    .single();
 
-  if (!channel) return;
+  // Resolve late_account_id
+  let lateAccountId = context.lateAccountId;
+  if (!lateAccountId) {
+    const { data: channel } = await supabase
+      .from("channels")
+      .select("late_account_id")
+      .eq("id", context.channelId)
+      .single();
 
-  const { data: contactChannel } = await supabase
-    .from("contact_channels")
-    .select("platform_sender_id")
-    .eq("contact_id", context.contactId)
-    .eq("channel_id", context.channelId)
-    .single();
+    if (!channel) return;
+    lateAccountId = channel.late_account_id;
+  }
 
-  if (!contactChannel) return;
+  const commentId = context.variables?.comment_id || context.incomingMessage.sender?.id;
+  if (!commentId) return;
+
+  const postId = context.variables?.post_id;
+  if (!postId) {
+    console.error("No post_id in context variables for privateReply node");
+    return;
+  }
 
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    const response = await late.messages.send(channel.late_account_id, {
-      to: contactChannel.platform_sender_id,
-      text,
-      ...(data.imageUrl ? { imageUrl: data.imageUrl } : {}),
+    await late.comments.privateReply({
+      postId,
+      commentId,
+      accountId: lateAccountId,
+      message: text,
     });
 
     await supabase.from("messages").insert({
@@ -688,7 +760,6 @@ async function executePrivateReply(
         ? [{ type: "image", url: data.imageUrl }]
         : null,
       sent_by_flow_id: context.flowId,
-      platform_message_id: response?.id || null,
       status: "sent",
     });
   } catch (error) {

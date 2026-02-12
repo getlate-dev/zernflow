@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createLateClient } from "@/lib/late-client";
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Get conversation with channel and contact info
+  // Get conversation with channel info
   const { data: conversation } = await supabase
     .from("conversations")
     .select("*, channels(*)")
@@ -51,6 +50,20 @@ export async function POST(request: NextRequest) {
 
   if (!conversation) {
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+  }
+
+  // Ensure we have the Late conversation ID
+  if (!conversation.late_conversation_id) {
+    return NextResponse.json(
+      { error: "No Late conversation ID linked to this conversation" },
+      { status: 400 }
+    );
+  }
+
+  // Get the channel's late_account_id
+  const channel = conversation.channels as { late_account_id: string } | null;
+  if (!channel?.late_account_id) {
+    return NextResponse.json({ error: "Channel not found or missing Late account ID" }, { status: 404 });
   }
 
   // Get workspace API key
@@ -64,33 +77,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "API key not configured" }, { status: 400 });
   }
 
-  // Get contact's platform sender ID
-  const { data: contactChannel } = await supabase
-    .from("contact_channels")
-    .select("platform_sender_id")
-    .eq("contact_id", conversation.contact_id)
-    .eq("channel_id", conversation.channel_id)
-    .single();
-
-  if (!contactChannel) {
-    return NextResponse.json({ error: "Contact channel not found" }, { status: 404 });
-  }
-
-  // Send via Late SDK
-  const channel = conversation.channels as { late_account_id: string } | null;
-  if (!channel) {
-    return NextResponse.json({ error: "Channel not found" }, { status: 404 });
-  }
-
-  const late = createLateClient(workspace.late_api_key_encrypted);
-
+  // Send via Late REST API
   try {
-    const response = await late.messages.send(channel.late_account_id, {
-      to: contactChannel.platform_sender_id,
-      text,
-    });
+    const lateResponse = await fetch(
+      `https://getlate.dev/api/v1/inbox/conversations/${conversation.late_conversation_id}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${workspace.late_api_key_encrypted}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accountId: channel.late_account_id,
+          message: text,
+        }),
+      }
+    );
 
-    // Store message
+    if (!lateResponse.ok) {
+      const lateError = await lateResponse.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: lateError.error || `Late API error (${lateResponse.status})` },
+        { status: lateResponse.status }
+      );
+    }
+
+    const lateData = await lateResponse.json();
+
+    // Store outbound message in Supabase
     const { data: message, error } = await supabase
       .from("messages")
       .insert({
@@ -98,7 +112,7 @@ export async function POST(request: NextRequest) {
         direction: "outbound",
         text,
         sent_by_user_id: user.id,
-        platform_message_id: response?.id || null,
+        platform_message_id: lateData?.data?.messageId || null,
         status: "sent",
       })
       .select("*")
@@ -106,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Update conversation
+    // Update conversation's last message info
     await supabase
       .from("conversations")
       .update({
@@ -117,8 +131,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
+    console.error("Failed to send message via Late API:", error);
     return NextResponse.json(
-      { error: `Failed to send: ${error}` },
+      { error: `Failed to send message: ${error}` },
       { status: 500 }
     );
   }
