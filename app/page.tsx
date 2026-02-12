@@ -11,6 +11,9 @@ import {
   CheckCircle,
   TrendingUp,
   Heart,
+  Github,
+  X,
+  Check,
 } from "lucide-react";
 
 export default function Home() {
@@ -23,7 +26,16 @@ export default function Home() {
             <Image src="/logo.png" alt="ZernFlow" width={28} height={28} className="rounded-lg" />
             <span className="text-base font-bold text-gray-900">ZernFlow</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Link
+              href="https://github.com/getlate-dev/zernflow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-900 sm:inline-flex"
+            >
+              <Github className="h-4 w-4" />
+              Star on GitHub
+            </Link>
             <Link
               href="/login"
               className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-900"
@@ -43,13 +55,24 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 sm:pt-28">
         <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5">
+            <span className="text-xs font-medium text-indigo-700">Open source ManyChat alternative</span>
+            <Link
+              href="https://github.com/getlate-dev/zernflow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-500 hover:text-indigo-700"
+            >
+              View on GitHub <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-            Turn comments and DMs into{" "}
-            <span className="text-indigo-600">customers</span>
+            Automate your DMs and comments.{" "}
+            <span className="text-indigo-600">Own your data.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-500">
-            Automate your Instagram, Facebook, Telegram, X, Bluesky, and Reddit
-            conversations. Capture leads, close sales, and grow your audience on autopilot.
+            The open source chat automation platform for Instagram, Facebook, Telegram,
+            X, Bluesky, and Reddit. Like ManyChat, but free, open source, and works on 6 platforms.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -59,8 +82,17 @@ export default function Home() {
               Get started free
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-            <p className="text-xs text-gray-400">No credit card required</p>
+            <Link
+              href="https://github.com/getlate-dev/zernflow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 sm:w-auto"
+            >
+              <Github className="h-4 w-4" />
+              View source code
+            </Link>
           </div>
+          <p className="mt-4 text-xs text-gray-400">MIT licensed. Self-host or use our cloud. No credit card required.</p>
         </div>
 
         {/* Flow builder preview */}
@@ -122,56 +154,112 @@ export default function Home() {
       {/* Platforms */}
       <section className="border-y border-gray-100 bg-gray-50/60 py-10">
         <div className="mx-auto max-w-6xl px-6">
+          <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-gray-400">Works with 6 platforms (ManyChat only supports 2)</p>
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
             {["Instagram", "Facebook", "Telegram", "X / Twitter", "Bluesky", "Reddit"].map((p) => (
-              <span key={p} className="text-sm font-medium text-gray-400">{p}</span>
+              <span key={p} className="text-sm font-medium text-gray-500">{p}</span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What you get */}
+      {/* ManyChat comparison */}
       <section className="py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Why teams switch from ManyChat
+            </h2>
+            <p className="mt-3 text-base text-gray-500">
+              Same features you rely on. More platforms. No monthly bill.
+            </p>
+          </div>
+          <div className="mx-auto mt-12 max-w-3xl">
+            <div className="overflow-hidden rounded-2xl border border-gray-200">
+              {/* Header */}
+              <div className="grid grid-cols-3 border-b border-gray-200 bg-gray-50">
+                <div className="px-6 py-4" />
+                <div className="border-l border-gray-200 px-6 py-4 text-center">
+                  <p className="text-sm font-semibold text-gray-400">ManyChat</p>
+                </div>
+                <div className="border-l border-gray-200 bg-indigo-50 px-6 py-4 text-center">
+                  <p className="text-sm font-semibold text-indigo-600">ZernFlow</p>
+                </div>
+              </div>
+              {/* Rows */}
+              {[
+                { feature: "Instagram & Facebook", manychat: true, zernflow: true },
+                { feature: "Telegram", manychat: false, zernflow: true },
+                { feature: "X / Twitter", manychat: false, zernflow: true },
+                { feature: "Bluesky & Reddit", manychat: false, zernflow: true },
+                { feature: "Visual flow builder", manychat: true, zernflow: true },
+                { feature: "Comment-to-DM", manychat: true, zernflow: true },
+                { feature: "Live chat inbox", manychat: true, zernflow: true },
+                { feature: "Contact CRM", manychat: true, zernflow: true },
+                { feature: "Open source", manychat: false, zernflow: true },
+                { feature: "Self-hostable", manychat: false, zernflow: true },
+                { feature: "Free forever", manychat: false, zernflow: true },
+              ].map((row) => (
+                <div key={row.feature} className="grid grid-cols-3 border-b border-gray-100 last:border-b-0">
+                  <div className="px-6 py-3">
+                    <p className="text-sm text-gray-700">{row.feature}</p>
+                  </div>
+                  <div className="flex items-center justify-center border-l border-gray-100 px-6 py-3">
+                    {row.manychat ? (
+                      <Check className="h-4 w-4 text-gray-300" />
+                    ) : (
+                      <X className="h-4 w-4 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center border-l border-gray-100 bg-indigo-50/30 px-6 py-3">
+                    <Check className="h-4 w-4 text-indigo-600" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="border-t border-gray-100 bg-gray-50/60 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
               Everything you need to grow on social
             </h2>
-            <p className="mt-3 text-base text-gray-500">
-              Build automated conversations that capture leads, answer FAQs, and close sales across all your social accounts.
-            </p>
           </div>
           <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 icon: MessageCircle,
                 title: "Comment-to-DM",
-                desc: "Someone comments a keyword on your post? Instantly send them a DM with your link, offer, or lead magnet.",
+                desc: "Someone comments a keyword? Instantly DM them your link, offer, or lead magnet.",
               },
               {
                 icon: GitBranch,
                 title: "Visual flow builder",
-                desc: "Build conversation flows by dragging and dropping. No code needed. Set up welcome messages, follow-ups, and sales funnels.",
+                desc: "Drag-and-drop conversation flows. Welcome messages, follow-ups, sales funnels. No code.",
               },
               {
                 icon: MessageSquare,
                 title: "Live chat inbox",
-                desc: "See all your DMs in one place. Let the bot handle the easy stuff, jump in when a real conversation matters.",
+                desc: "All your DMs in one place. Bot handles the easy stuff, you jump in when it matters.",
               },
               {
                 icon: Users,
-                title: "Contact management",
-                desc: "Tag your audience, track who they are, build segments. Send the right message to the right people.",
+                title: "Contact CRM",
+                desc: "Tag your audience, build segments, track interactions. Right message to the right people.",
               },
               {
                 icon: Radio,
                 title: "Broadcasts",
-                desc: "Send promotions, updates, or announcements to your audience. Target by tags, platform, or custom segments.",
+                desc: "Send promotions and updates to your audience. Target by tags, platform, or segments.",
               },
               {
                 icon: Zap,
-                title: "Integrations",
-                desc: "Connect to your CRM, email tool, or any API. Push leads to Google Sheets, trigger Zapier workflows, and more.",
+                title: "Webhooks & API",
+                desc: "Connect to any tool. Push leads to Google Sheets, trigger Zapier, call external APIs.",
               },
             ].map((item) => {
               const Icon = item.icon;
@@ -183,6 +271,57 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Open source section */}
+      <section className="py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1">
+                <Github className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-xs font-medium text-gray-500">MIT licensed</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Open source. Not open-washing.
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-gray-500">
+                ZernFlow is fully open source under the MIT license. Read every line of code,
+                self-host on your own infrastructure, or fork it and make it yours.
+                No "open core" tricks, no enterprise-only features behind a paywall.
+              </p>
+              <p className="mt-3 text-base leading-relaxed text-gray-500">
+                Your automations, your contacts, your data. You own everything.
+                No vendor lock-in, ever.
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="https://github.com/getlate-dev/zernflow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  <Github className="h-4 w-4" />
+                  Star us on GitHub
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: "6 platforms, one tool", detail: "Instagram, Facebook, Telegram, X, Bluesky, Reddit. ManyChat only does 2." },
+                { label: "Free forever", detail: "No monthly fees. No per-account charges. No feature limits." },
+                { label: "Self-hostable", detail: "Clone the repo, set your env vars, deploy. Your server, your rules." },
+                { label: "Community-driven", detail: "Built in public. PRs welcome. Roadmap shaped by users, not investors." },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-gray-200 px-5 py-4">
+                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
+                  <p className="mt-0.5 text-sm text-gray-500">{item.detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -229,43 +368,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Why ZernFlow */}
-      <section className="py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                More platforms. No monthly fees.
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-gray-500">
-                Most chat automation tools only work with Instagram and Facebook,
-                then charge you $15/mo or more per account. ZernFlow works across 6
-                platforms and is completely free to use.
-              </p>
-              <p className="mt-3 text-base leading-relaxed text-gray-500">
-                Whether you're a creator, small business, or agency managing multiple
-                accounts, you get the same powerful features without per-seat pricing.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: "6 platforms in one place", detail: "Instagram, Facebook, Telegram, X, Bluesky, Reddit" },
-                { label: "Free forever", detail: "No monthly fees. No per-account charges. No feature gates." },
-                { label: "Unlimited accounts", detail: "Connect and manage as many social accounts as you need" },
-                { label: "Open source", detail: "Fully transparent. Community-driven. MIT licensed." },
-              ].map((item) => (
-                <div key={item.label} className="rounded-xl border border-gray-200 px-5 py-4">
-                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
-                  <p className="mt-0.5 text-sm text-gray-500">{item.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Use cases */}
-      <section className="border-t border-gray-100 bg-gray-50/60 py-20">
+      <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-center text-2xl font-bold text-gray-900 sm:text-3xl">
             Built for creators, businesses, and agencies
@@ -307,18 +411,30 @@ export default function Home() {
           <div className="rounded-2xl bg-indigo-600 p-10 sm:p-14">
             <div className="mx-auto max-w-xl text-center">
               <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                Ready to automate your social media?
+                Stop paying for chat automation
               </h2>
               <p className="mt-3 text-sm text-indigo-100">
-                Set up your first automation in minutes. Free forever, no credit card needed.
+                Switch from ManyChat in minutes. Import your flows, connect your accounts, and go live.
+                Free forever, open source, MIT licensed.
               </p>
-              <Link
-                href="/register"
-                className="mt-8 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-indigo-600 shadow-sm hover:bg-indigo-50"
-              >
-                Get started free
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-indigo-600 shadow-sm hover:bg-indigo-50"
+                >
+                  Get started free
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <Link
+                  href="https://github.com/getlate-dev/zernflow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-indigo-400 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-500"
+                >
+                  <Github className="h-4 w-4" />
+                  Star on GitHub
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -334,8 +450,9 @@ export default function Home() {
               href="https://github.com/getlate-dev/zernflow"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-400 hover:text-gray-600"
+              className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600"
             >
+              <Github className="h-3.5 w-3.5" />
               GitHub
             </Link>
             <Link
@@ -344,7 +461,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-sm text-gray-400 hover:text-gray-600"
             >
-              Late API
+              Powered by Late
             </Link>
           </div>
           <p className="text-xs text-gray-400">
