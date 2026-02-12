@@ -165,7 +165,13 @@ export function ChannelsView({
       const res = await fetch("/api/v1/channels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lateAccountId: account._id }),
+        body: JSON.stringify({
+          lateAccountId: account._id,
+          platform: account.platform,
+          username: account.username,
+          displayName: account.displayName,
+          profileUrl: account.profileUrl,
+        }),
       });
 
       if (!res.ok) {

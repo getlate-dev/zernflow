@@ -178,40 +178,6 @@ class LateClient {
       return res.accounts;
     },
 
-    /**
-     * Get a specific social account by ID.
-     * Returns a normalized shape compatible with the old SDK interface.
-     */
-    get: async (
-      accountId: string
-    ): Promise<{
-      _id: string;
-      platform: string;
-      username: string | null;
-      displayName: string | null;
-      profilePicture: string | null;
-      profileUrl: string | null;
-      isActive: boolean;
-      status: string;
-      metadata: Record<string, unknown>;
-    }> => {
-      const res = await this.request<{ account: LateAccount }>(
-        "GET",
-        `/v1/accounts/${accountId}`
-      );
-      const a = res.account;
-      return {
-        _id: a._id,
-        platform: a.platform,
-        username: a.username || null,
-        displayName: a.displayName || a.username || null,
-        profilePicture: a.profileUrl || null,
-        profileUrl: a.profileUrl || null,
-        isActive: a.isActive,
-        status: a.status,
-        metadata: a.metadata,
-      };
-    },
   };
 
   // -----------------------------------------------------------------------

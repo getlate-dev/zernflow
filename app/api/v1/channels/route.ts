@@ -60,11 +60,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { lateAccountId } = body;
+  const { lateAccountId, platform, username, displayName, profileUrl } = body;
 
-  if (!lateAccountId) {
+  if (!lateAccountId || !platform) {
     return NextResponse.json(
-      { error: "lateAccountId is required" },
+      { error: "lateAccountId and platform are required" },
       { status: 400 }
     );
   }
@@ -72,9 +72,6 @@ export async function POST(request: NextRequest) {
   const late = createLateClient(workspace.late_api_key_encrypted);
 
   try {
-    // Fetch account details from Late API
-    const account = await late.accounts.get(lateAccountId);
-
     // Check if this account is already connected
     const { data: existing } = await supabase
       .from("channels")
@@ -97,7 +94,7 @@ export async function POST(request: NextRequest) {
     let webhookId: string | null = null;
     try {
       const webhook = await late.webhooks.create({
-        name: `ZernFlow - ${account.username || account.displayName || lateAccountId}`,
+        name: `ZernFlow - ${username || displayName || lateAccountId}`,
         url: getWebhookUrl(),
         events: ["message.received"],
         secret: webhookSecret,
@@ -113,11 +110,11 @@ export async function POST(request: NextRequest) {
       .from("channels")
       .insert({
         workspace_id: workspace.id,
-        platform: account.platform as "facebook" | "instagram" | "twitter" | "telegram" | "bluesky" | "reddit",
+        platform: platform as "facebook" | "instagram" | "twitter" | "telegram" | "bluesky" | "reddit",
         late_account_id: lateAccountId,
-        username: account.username || null,
-        display_name: account.displayName || account.username || null,
-        profile_picture: account.profileUrl || null,
+        username: username || null,
+        display_name: displayName || username || null,
+        profile_picture: profileUrl || null,
         webhook_id: webhookId,
         webhook_secret: webhookSecret,
       })
