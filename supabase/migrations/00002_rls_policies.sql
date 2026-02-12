@@ -33,12 +33,36 @@ create policy "Users can update their workspaces"
 -- ============================================================
 alter table workspace_members enable row level security;
 
-create policy "Users can view members of their workspaces"
+-- SELECT uses direct user_id check to avoid infinite recursion
+-- (is_workspace_member queries workspace_members, which would trigger RLS again)
+create policy "Members can view their workspace memberships"
   on workspace_members for select
-  using (is_workspace_member(workspace_id));
+  using (user_id = auth.uid());
 
-create policy "Owners can manage members"
-  on workspace_members for all
+create policy "Owners can insert members"
+  on workspace_members for insert
+  with check (
+    exists (
+      select 1 from workspace_members wm
+      where wm.workspace_id = workspace_members.workspace_id
+        and wm.user_id = auth.uid()
+        and wm.role = 'owner'
+    )
+  );
+
+create policy "Owners can update members"
+  on workspace_members for update
+  using (
+    exists (
+      select 1 from workspace_members wm
+      where wm.workspace_id = workspace_members.workspace_id
+        and wm.user_id = auth.uid()
+        and wm.role = 'owner'
+    )
+  );
+
+create policy "Owners can delete members"
+  on workspace_members for delete
   using (
     exists (
       select 1 from workspace_members wm
