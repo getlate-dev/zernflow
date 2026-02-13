@@ -25,6 +25,7 @@ interface WorkspaceSettings {
   id: string;
   name: string;
   hasApiKey: boolean;
+  hasOpenaiKey: boolean;
   globalKeywords: string[];
 }
 
@@ -42,6 +43,8 @@ export function SettingsView({
   const [name, setName] = useState(workspace.name);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
   const [keywords, setKeywords] = useState<string[]>(workspace.globalKeywords);
   const [newKeyword, setNewKeyword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -121,9 +124,12 @@ export function SettingsView({
         global_keywords: keywords,
       };
 
-      // Only update API key if user entered a new one
+      // Only update API keys if user entered new ones
       if (apiKey.trim()) {
         update.late_api_key_encrypted = apiKey.trim();
+      }
+      if (openaiKey.trim()) {
+        update.openai_api_key = openaiKey.trim();
       }
 
       const { error: updateError, count } = await supabase
@@ -140,6 +146,7 @@ export function SettingsView({
 
       setSaved(true);
       setApiKey("");
+      setOpenaiKey("");
       setTestResult(null);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -278,6 +285,64 @@ export function SettingsView({
             </div>
 
             {workspace.hasApiKey && !testResult && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
+                <Check className="h-3 w-3" />
+                API key configured
+              </p>
+            )}
+          </section>
+
+          <hr className="border-border" />
+
+          {/* OpenAI API Key */}
+          <section>
+            <div className="flex items-center gap-2">
+              <Key className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold">OpenAI API Key</h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Required for the AI Response flow node. Uses GPT models to generate replies.
+              {workspace.hasOpenaiKey && " A key is currently configured."}
+            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Get your API key from{" "}
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                platform.openai.com
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
+
+            <div className="mt-4 relative">
+              <input
+                type={showOpenaiKey ? "text" : "password"}
+                value={openaiKey}
+                onChange={(e) => setOpenaiKey(e.target.value)}
+                placeholder={
+                  workspace.hasOpenaiKey
+                    ? "Enter a new key to replace the current one"
+                    : "sk-..."
+                }
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm font-mono placeholder:text-muted-foreground placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showOpenaiKey ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            {workspace.hasOpenaiKey && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
                 <Check className="h-3 w-3" />
                 API key configured

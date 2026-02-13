@@ -77,6 +77,7 @@ export interface Database {
           name: string;
           slug: string;
           late_api_key_encrypted: string | null;
+          openai_api_key: string | null;
           global_keywords: Json | null;
           created_at: string;
           updated_at: string;
@@ -86,6 +87,7 @@ export interface Database {
           name: string;
           slug: string;
           late_api_key_encrypted?: string | null;
+          openai_api_key?: string | null;
           global_keywords?: Json | null;
           created_at?: string;
           updated_at?: string;
@@ -95,6 +97,7 @@ export interface Database {
           name?: string;
           slug?: string;
           late_api_key_encrypted?: string | null;
+          openai_api_key?: string | null;
           global_keywords?: Json | null;
           updated_at?: string;
         };

@@ -3,22 +3,29 @@ import type { Database } from "@/lib/types/database";
 import type { FlowExecutionContext, AiResponseNodeData } from "../types";
 import { createLateClient } from "@/lib/late-client";
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export async function executeAiResponse(
   supabase: SupabaseClient<Database>,
   data: AiResponseNodeData,
   context: FlowExecutionContext
 ) {
-  // Get workspace for API key
+  // Get workspace for API keys
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("late_api_key_encrypted")
+    .select("late_api_key_encrypted, openai_api_key")
     .eq("id", context.workspaceId)
     .single();
 
   if (!workspace?.late_api_key_encrypted) return;
 
+  const openaiApiKey = workspace.openai_api_key || process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) {
+    console.error("No OpenAI API key configured for workspace:", context.workspaceId);
+    return;
+  }
+
+  const openai = createOpenAI({ apiKey: openaiApiKey });
   const late = createLateClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id from channel if not in context

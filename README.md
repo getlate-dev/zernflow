@@ -1,6 +1,6 @@
 # ZernFlow
 
-Open-source chatbot builder for social media. Visual flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit.
+The open-source ManyChat alternative. Visual flow builder for Instagram, Facebook, Telegram, Twitter/X, Bluesky & Reddit.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Website](https://img.shields.io/badge/Website-zernflow.com-indigo)](https://zernflow.com)
@@ -9,18 +9,23 @@ Open-source chatbot builder for social media. Visual flow builder for Instagram,
 
 ## What is ZernFlow?
 
-ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, manage contacts, send broadcasts, and handle live chat conversations across 6 social media platforms.
+ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, manage contacts, send broadcasts, run drip campaigns, and handle live chat conversations across 6 social media platforms.
 
 **Powered by [Late](https://getlate.dev)** for OAuth, token refresh, rate limiting, and cross-platform messaging.
 
 ### Features
 
 - **Visual Flow Builder** - Drag-and-drop chatbot builder with 15+ node types
+- **AI Response Node** - GPT-powered replies using OpenAI (gpt-4o-mini / gpt-4o)
 - **Live Chat Inbox** - Real-time inbox with human takeover and conversation assignment
 - **Contact CRM** - Tags, custom fields, segments, and contact management
 - **Broadcasting** - Send targeted messages to contact segments
+- **Sequences** - Drip campaigns with timed message series and automatic enrollment
+- **Team Management** - Invite members, assign roles, manage permissions
 - **Multi-Platform** - Instagram, Facebook, Telegram, Twitter/X, Bluesky, Reddit
+- **Rich Messaging** - Buttons, quick replies, and carousel cards
 - **Comment-to-DM** - Automatically DM users who comment specific keywords
+- **Growth Tools** - Conversation starter links for each connected platform
 - **A/B Testing** - Split test different message paths
 - **Webhooks & HTTP** - Connect to external APIs from your flows
 
@@ -31,6 +36,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
 - A [Late](https://getlate.dev) API key
+- An [OpenAI](https://platform.openai.com) API key (optional, for AI node)
 
 ### Setup
 
@@ -47,7 +53,7 @@ npm install
 Create a free project at [supabase.com](https://supabase.com). Then run the SQL migrations in the Supabase SQL editor:
 
 ```bash
-# Run each file in supabase/migrations/ in order
+# Run each file in supabase/migrations/ in order (00001 through 00006)
 ```
 
 3. **Configure environment**
@@ -56,13 +62,15 @@ Create a free project at [supabase.com](https://supabase.com). Then run the SQL 
 cp .env.example .env
 ```
 
-Fill in your Supabase and Late API credentials:
+Fill in your credentials:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 LATE_API_KEY=your-late-api-key
+OPENAI_API_KEY=sk-your-openai-key          # Optional, for AI Response node
+CRON_SECRET=your-cron-secret               # For sequence processor + job scheduler
 ```
 
 4. **Run**
@@ -76,18 +84,18 @@ Open [http://localhost:3000](http://localhost:3000), sign up, and start building
 ## Architecture
 
 ```
-Browser (Flow Builder, Inbox, CRM)
+Browser (Flow Builder, Inbox, CRM, Sequences)
         |
    Next.js App Router
         |
-   +----+----+----+----+
-   |    |    |    |    |
-Webhook Flow CRM  Live  Broadcast
-Recv.  Engine     Chat
-   |    |    |    |    |
-   +----+----+----+----+
-        |         |
-    Supabase   Late API
+   +----+----+----+----+----+
+   |    |    |    |    |    |
+Webhook Flow CRM  Live  Broadcast Sequence
+Recv.  Engine     Chat           Processor
+   |    |    |    |    |    |
+   +----+----+----+----+----+
+        |         |         |
+    Supabase   Late API   OpenAI
   (PG + Auth   (6 platforms)
   + Realtime)
 ```
@@ -99,7 +107,9 @@ Recv.  Engine     Chat
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Database + Auth + Realtime | Supabase |
 | Flow Builder | React Flow (@xyflow/react) |
+| AI | Vercel AI SDK + OpenAI |
 | UI | Tailwind CSS 4 |
+| Icons | @icons-pack/react-simple-icons |
 | Messaging | [Late API](https://getlate.dev) |
 
 ## Flow Node Types
@@ -107,7 +117,8 @@ Recv.  Engine     Chat
 | Node | Description |
 |------|-------------|
 | Trigger | Keyword, postback, quick reply, welcome, default |
-| Send Message | Text, images, quick replies, buttons |
+| Send Message | Text, images, buttons, quick replies, carousels |
+| AI Response | GPT-powered replies with conversation context |
 | Condition | If/else on tags, fields, platform, variables |
 | Delay | Wait seconds/minutes/hours/days |
 | Add/Remove Tag | Manage contact tags |
@@ -115,6 +126,7 @@ Recv.  Engine     Chat
 | HTTP Request | Call external APIs, store responses |
 | Go To Flow | Jump to another flow (with return stack) |
 | Human Takeover | Pause automation, alert inbox |
+| Enroll in Sequence | Add contact to a drip campaign |
 | Subscribe/Unsubscribe | Toggle contact subscription |
 | A/B Split | Randomly route contacts for testing |
 | Smart Delay | Wait for user response or timeout |
@@ -127,21 +139,26 @@ Recv.  Engine     Chat
 zernflow/
 ├── app/
 │   ├── (auth)/             # Login, register pages
-│   ├── (dashboard)/        # Dashboard, flows, inbox, contacts, etc.
+│   ├── (dashboard)/        # Flows, inbox, contacts, sequences, settings
+│   ├── invite/             # Team invite acceptance page
 │   └── api/
 │       ├── webhooks/late/   # Webhook receiver
 │       ├── cron/jobs/       # Job scheduler
+│       ├── cron/sequences/  # Sequence step processor
 │       └── v1/              # CRUD API routes
 ├── components/
 │   ├── flow-builder/        # Canvas, nodes, panels
 │   ├── inbox/               # Conversation list, thread, contact panel
+│   ├── sequences/           # Sequence editor, enrollment list
+│   ├── settings/            # Team management
 │   └── ui/                  # Shared UI components
 ├── lib/
 │   ├── supabase/            # Server/client/middleware
-│   ├── flow-engine/         # Engine, trigger matcher, platform adapter
+│   ├── flow-engine/         # Engine, trigger matcher, platform adapter, AI node
+│   ├── actions/             # Server actions (team, sequences, workspace)
 │   └── types/               # TypeScript types
 └── supabase/
-    └── migrations/          # SQL schema + RLS policies
+    └── migrations/          # SQL schema + RLS policies (00001-00006)
 ```
 
 ## Contributing
