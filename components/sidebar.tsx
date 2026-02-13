@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import { useState, useTransition } from "react";
 import {
-  LayoutDashboard,
   GitBranch,
   MessageSquare,
   Users,
@@ -19,12 +16,19 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import type { Database } from "@/lib/types/database";
 
 type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
 
+interface WorkspaceItem {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+}
+
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Flows", href: "/dashboard/flows", icon: GitBranch },
   { name: "Inbox", href: "/dashboard/inbox", icon: MessageSquare },
   { name: "Contacts", href: "/dashboard/contacts", icon: Users },
@@ -37,9 +41,11 @@ const navigation = [
 
 export function Sidebar({
   workspace,
+  workspaces,
 }: {
   workspace: Workspace;
   user: { id: string; email?: string };
+  workspaces: WorkspaceItem[];
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -55,7 +61,6 @@ export function Sidebar({
     });
   }
 
-  // Clear pending state when navigation completes
   const activePendingHref = isPending ? pendingHref : null;
 
   async function handleSignOut() {
@@ -66,20 +71,13 @@ export function Sidebar({
 
   return (
     <div className="flex h-full w-60 flex-col border-r border-border bg-sidebar">
-      <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="ZernFlow" width={28} height={28} className="rounded-lg" />
-          <span className="font-semibold text-sidebar-foreground">
-            {workspace.name}
-          </span>
-        </Link>
+      <div className="border-b border-sidebar-border px-3 py-3">
+        <WorkspaceSwitcher current={workspace} workspaces={workspaces} />
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
         {navigation.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isActive = pathname.startsWith(item.href);
           const isLoading = activePendingHref === item.href;
           return (
             <button

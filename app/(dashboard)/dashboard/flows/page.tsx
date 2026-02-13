@@ -1,6 +1,6 @@
 import { getWorkspace } from "@/lib/workspace";
 import Link from "next/link";
-import { GitBranch, Sparkles } from "lucide-react";
+import { GitBranch, Sparkles, Plug } from "lucide-react";
 import { CreateFlowButton } from "@/components/create-flow-button";
 import type { FlowStatus } from "@/lib/types/database";
 
@@ -35,11 +35,18 @@ function formatDate(dateString: string) {
 export default async function FlowsPage() {
   const { workspace, supabase } = await getWorkspace();
 
-  const { data: flows } = await supabase
-    .from("flows")
-    .select("id, name, status, updated_at, nodes")
-    .eq("workspace_id", workspace.id)
-    .order("updated_at", { ascending: false });
+  const [{ data: flows }, { count: channelCount }] = await Promise.all([
+    supabase
+      .from("flows")
+      .select("id, name, status, updated_at, nodes")
+      .eq("workspace_id", workspace.id)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("channels")
+      .select("*", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id)
+      .eq("is_active", true),
+  ]);
 
   return (
     <div className="p-8">
@@ -61,6 +68,26 @@ export default async function FlowsPage() {
           <CreateFlowButton />
         </div>
       </div>
+
+      {(channelCount ?? 0) === 0 && (
+        <div className="mt-6 flex items-center gap-4 rounded-xl border border-dashed border-border bg-card p-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Plug className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium">Connect a channel to get started</p>
+            <p className="text-xs text-muted-foreground">
+              Link your social media accounts so your flows can send and receive messages.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/channels"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            Connect
+          </Link>
+        </div>
+      )}
 
       {!flows || flows.length === 0 ? (
         <div className="mt-12 rounded-xl border border-dashed border-border p-12 text-center">
