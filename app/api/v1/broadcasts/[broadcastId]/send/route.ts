@@ -285,7 +285,7 @@ async function evaluateRule(
         .from("channels")
         .select("id")
         .eq("workspace_id", workspaceId)
-        .eq("platform", rule.value);
+        .eq("platform", rule.value as "facebook" | "instagram" | "twitter" | "telegram" | "bluesky" | "reddit");
 
       if (!channels?.length) {
         return rule.operator === "not_equals" ? new Set(contactIds) : new Set();
