@@ -73,7 +73,7 @@ export function SettingsView({
       const res = await fetch("/api/v1/channels/test-key", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: keyToTest }),
+        body: JSON.stringify({ apiKey: keyToTest, workspaceId: workspace.id }),
       });
 
       const data = await res.json();
@@ -92,20 +92,8 @@ export function SettingsView({
         accountCount: accounts.length,
       });
 
-      // Auto-save the key on successful test
-      const supabase = createClient();
-      const { error: saveErr } = await supabase
-        .from("workspaces")
-        .update({ late_api_key_encrypted: keyToTest })
-        .eq("id", workspace.id)
-        .select("id")
-        .single();
-
-      if (saveErr) {
-        console.error("Failed to auto-save API key:", saveErr);
-      } else {
-        setApiKey("");
-      }
+      // Key was saved and channels synced server-side
+      setApiKey("");
     } catch {
       setTestResult({
         success: false,

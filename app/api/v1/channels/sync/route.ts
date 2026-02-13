@@ -1,0 +1,130 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createLateClient } from "@/lib/late-client";
+
+async function getWorkspace(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: membership } = await supabase
+    .from("workspace_members")
+    .select("workspace_id, workspaces(*)")
+    .eq("user_id", user.id)
+    .limit(1)
+    .single();
+
+  if (!membership?.workspaces) return null;
+  return membership.workspaces;
+}
+
+/**
+ * POST /api/v1/channels/sync
+ *
+ * Syncs all Late accounts as channels for the current workspace.
+ * Creates new channels for accounts not yet in the DB.
+ * Deactivates channels whose Late accounts no longer exist.
+ */
+export async function POST() {
+  const supabase = await createClient();
+  const workspace = await getWorkspace(supabase);
+  if (!workspace)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!workspace.late_api_key_encrypted) {
+    return NextResponse.json(
+      { error: "Late API key not configured. Go to Settings first." },
+      { status: 400 }
+    );
+  }
+
+  const late = createLateClient(workspace.late_api_key_encrypted);
+
+  try {
+    const res = await late.accounts.listAccounts();
+    const lateAccounts = res.data?.accounts ?? [];
+
+    // Get existing channels for this workspace
+    const { data: existingChannels } = await supabase
+      .from("channels")
+      .select("*")
+      .eq("workspace_id", workspace.id);
+
+    const existingByLateId = new Map(
+      (existingChannels ?? []).map((c) => [c.late_account_id, c])
+    );
+
+    const lateAccountIds = new Set(lateAccounts.map((a: { _id?: string }) => a._id).filter(Boolean));
+    let created = 0;
+    let updated = 0;
+
+    // Create or update channels for each Late account
+    for (const account of lateAccounts) {
+      if (!account._id) continue;
+
+      const existing = existingByLateId.get(account._id);
+
+      if (existing) {
+        // Update display info if changed
+        if (
+          existing.username !== (account.username || null) ||
+          existing.display_name !== (account.displayName || account.username || null) ||
+          existing.profile_picture !== (account.profileUrl || null)
+        ) {
+          await supabase
+            .from("channels")
+            .update({
+              username: account.username || null,
+              display_name: account.displayName || account.username || null,
+              profile_picture: account.profileUrl || null,
+            })
+            .eq("id", existing.id);
+          updated++;
+        }
+      } else {
+        // Create new channel
+        await supabase.from("channels").insert({
+          workspace_id: workspace.id,
+          platform: account.platform as "facebook" | "instagram" | "twitter" | "telegram" | "bluesky" | "reddit",
+          late_account_id: account._id,
+          username: account.username || null,
+          display_name: account.displayName || account.username || null,
+          profile_picture: account.profileUrl || null,
+          is_active: true,
+        });
+        created++;
+      }
+    }
+
+    // Deactivate channels whose Late accounts no longer exist
+    let deactivated = 0;
+    for (const channel of existingChannels ?? []) {
+      if (!lateAccountIds.has(channel.late_account_id) && channel.is_active) {
+        await supabase
+          .from("channels")
+          .update({ is_active: false })
+          .eq("id", channel.id);
+        deactivated++;
+      }
+    }
+
+    // Return updated channel list
+    const { data: channels } = await supabase
+      .from("channels")
+      .select("*")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false });
+
+    return NextResponse.json({
+      channels: channels ?? [],
+      synced: { created, updated, deactivated },
+    });
+  } catch (error) {
+    console.error("Failed to sync channels:", error);
+    return NextResponse.json(
+      { error: `Failed to sync channels: ${error instanceof Error ? error.message : String(error)}` },
+      { status: 500 }
+    );
+  }
+}

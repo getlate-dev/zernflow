@@ -1,31 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   Plug,
-  Plus,
   Power,
   PowerOff,
   Loader2,
-  AlertCircle,
   RefreshCw,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Platform } from "@/lib/types/database";
 
 type Channel = Database["public"]["Tables"]["channels"]["Row"];
-
-interface LateAccount {
-  _id: string;
-  platform: string;
-  username: string;
-  displayName: string;
-  profileUrl: string | null;
-  isActive: boolean;
-  status: string;
-}
 
 const platformConfig: Record<
   Platform,
@@ -102,40 +89,41 @@ export function ChannelsView({
   workspaceId: string;
 }) {
   const [channels, setChannels] = useState(initialChannels);
-  const [showConnect, setShowConnect] = useState(false);
-  const [availableAccounts, setAvailableAccounts] = useState<LateAccount[]>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [accountsError, setAccountsError] = useState<string | null>(null);
-  const [connectingId, setConnectingId] = useState<string | null>(null);
-  const [connectError, setConnectError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const fetchAvailableAccounts = useCallback(async () => {
-    setLoadingAccounts(true);
-    setAccountsError(null);
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMessage(null);
 
     try {
-      const res = await fetch("/api/v1/channels/available");
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to fetch accounts (${res.status})`);
-      }
+      const res = await fetch("/api/v1/channels/sync", { method: "POST" });
       const data = await res.json();
-      setAvailableAccounts(data.accounts ?? []);
-    } catch (err) {
-      setAccountsError(
-        err instanceof Error ? err.message : "Failed to fetch accounts"
-      );
-    } finally {
-      setLoadingAccounts(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (showConnect) {
-      fetchAvailableAccounts();
+      if (!res.ok || data.error) {
+        setSyncMessage(data.error || "Sync failed");
+        return;
+      }
+
+      setChannels(data.channels ?? []);
+      const { created, updated, deactivated } = data.synced;
+      if (created === 0 && updated === 0 && deactivated === 0) {
+        setSyncMessage("All channels up to date");
+      } else {
+        const parts = [];
+        if (created > 0) parts.push(`${created} added`);
+        if (updated > 0) parts.push(`${updated} updated`);
+        if (deactivated > 0) parts.push(`${deactivated} deactivated`);
+        setSyncMessage(parts.join(", "));
+      }
+      setTimeout(() => setSyncMessage(null), 4000);
+    } catch {
+      setSyncMessage("Failed to sync. Check your connection.");
+    } finally {
+      setSyncing(false);
     }
-  }, [showConnect, fetchAvailableAccounts]);
+  }
 
   async function handleToggleActive(channel: Channel) {
     setTogglingId(channel.id);
@@ -156,44 +144,6 @@ export function ChannelsView({
     setTogglingId(null);
   }
 
-  async function handleConnect(account: LateAccount) {
-    if (connectingId) return;
-    setConnectingId(account._id);
-    setConnectError(null);
-
-    try {
-      const res = await fetch("/api/v1/channels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lateAccountId: account._id,
-          platform: account.platform,
-          username: account.username,
-          displayName: account.displayName,
-          profileUrl: account.profileUrl,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to connect (${res.status})`);
-      }
-
-      const channel = await res.json();
-      setChannels((prev) => [channel, ...prev]);
-      // Remove connected account from available list
-      setAvailableAccounts((prev) =>
-        prev.filter((a) => a._id !== account._id)
-      );
-    } catch (err) {
-      setConnectError(
-        err instanceof Error ? err.message : "Failed to connect channel"
-      );
-    } finally {
-      setConnectingId(null);
-    }
-  }
-
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -202,163 +152,39 @@ export function ChannelsView({
           <div>
             <h1 className="text-2xl font-bold">Channels</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Connect and manage your social media channels
+              Your connected social media accounts from Late
             </p>
           </div>
-          <button
-            onClick={() => setShowConnect(!showConnect)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            {showConnect ? (
-              <>
-                <X className="h-4 w-4" />
-                Close
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Connect Channel
-              </>
+          <div className="flex items-center gap-3">
+            {syncMessage && (
+              <span className="text-xs text-muted-foreground">
+                {syncMessage}
+              </span>
             )}
-          </button>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <RefreshCw
+                className={cn("h-4 w-4", syncing && "animate-spin")}
+              />
+              {syncing ? "Syncing..." : "Sync"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Connect panel: available Late accounts */}
-      {showConnect && (
-        <div className="border-b border-border bg-card px-8 py-6">
-          <div className="mx-auto max-w-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">
-                Available accounts from Late
-              </h2>
-              <button
-                onClick={fetchAvailableAccounts}
-                disabled={loadingAccounts}
-                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent disabled:opacity-50"
-              >
-                <RefreshCw
-                  className={cn(
-                    "h-3 w-3",
-                    loadingAccounts && "animate-spin"
-                  )}
-                />
-                Refresh
-              </button>
-            </div>
-
-            {/* Error */}
-            {accountsError && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                <p className="text-sm text-red-700">
-                  {accountsError}
-                </p>
-              </div>
-            )}
-
-            {/* Connect error */}
-            {connectError && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                <p className="text-sm text-red-700">
-                  {connectError}
-                </p>
-              </div>
-            )}
-
-            {/* Loading */}
-            {loadingAccounts && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Fetching accounts...
-                </span>
-              </div>
-            )}
-
-            {/* Account list */}
-            {!loadingAccounts && !accountsError && (
-              <div className="mt-4 space-y-2">
-                {availableAccounts.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
-                    No additional accounts available. All your Late accounts are
-                    already connected, or no accounts were found.
-                  </p>
-                ) : (
-                  availableAccounts.map((account) => {
-                    const isConnecting = connectingId === account._id;
-                    return (
-                      <div
-                        key={account._id}
-                        className="flex items-center justify-between rounded-lg border border-border bg-background p-4 transition-colors hover:bg-accent/30"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold",
-                              getPlatformBgColor(account.platform),
-                              getPlatformColor(account.platform)
-                            )}
-                          >
-                            {platformIcons[account.platform] ||
-                              account.platform.slice(0, 2)}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {account.displayName || account.username}
-                            </p>
-                            {account.username && (
-                              <p className="text-xs text-muted-foreground">
-                                @{account.username}
-                              </p>
-                            )}
-                            <p className="mt-0.5 text-[10px] text-muted-foreground">
-                              {getPlatformLabel(account.platform)}
-                              {account.status && account.status !== "active"
-                                ? ` (${account.status})`
-                                : ""}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleConnect(account)}
-                          disabled={!!connectingId}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                        >
-                          {isConnecting ? (
-                            <>
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Connecting...
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-3 w-3" />
-                              Connect
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Connected channel cards */}
+      {/* Channel cards */}
       <div className="flex-1 overflow-auto p-8">
         {channels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Plug className="h-10 w-10 text-muted-foreground/40" />
             <p className="mt-3 text-sm font-medium text-muted-foreground">
-              No channels connected
+              No channels yet
             </p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              Connect your first social media channel to start receiving
-              messages
+            <p className="mt-1 max-w-xs text-center text-xs text-muted-foreground/70">
+              Connect your Late API key in Settings. Your social accounts will appear here automatically.
             </p>
           </div>
         ) : (
@@ -373,7 +199,6 @@ export function ChannelsView({
                   className="rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between">
-                    {/* Platform icon and info */}
                     <div className="flex items-center gap-3">
                       <div
                         className={cn(
@@ -402,7 +227,6 @@ export function ChannelsView({
                       </div>
                     </div>
 
-                    {/* Status toggle */}
                     <button
                       onClick={() => handleToggleActive(channel)}
                       disabled={togglingId === channel.id}
@@ -426,7 +250,6 @@ export function ChannelsView({
                     </button>
                   </div>
 
-                  {/* Status badge */}
                   <div className="mt-4 flex items-center gap-2">
                     <span
                       className={cn(
