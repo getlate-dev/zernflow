@@ -150,12 +150,21 @@ export function ChannelsView({
                       {/* Avatar with platform badge */}
                       <div className="relative">
                         {channel.profile_picture ? (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            src={channel.profile_picture}
-                            alt={channel.display_name ?? channel.username ?? label}
-                            className="h-10 w-10 rounded-lg object-cover"
-                          />
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={channel.profile_picture}
+                              alt={channel.display_name ?? channel.username ?? label}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-card bg-background">
+                              <PlatformIcon
+                                platform={channel.platform}
+                                className="h-3 w-3"
+                                size={12}
+                              />
+                            </div>
+                          </>
                         ) : (
                           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                             <PlatformIcon
@@ -164,14 +173,6 @@ export function ChannelsView({
                             />
                           </div>
                         )}
-                        {/* Platform badge */}
-                        <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-card bg-background">
-                          <PlatformIcon
-                            platform={channel.platform}
-                            className="h-3 w-3"
-                            size={12}
-                          />
-                        </div>
                       </div>
 
                       <div>

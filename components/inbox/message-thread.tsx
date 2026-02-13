@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Paperclip, Bot, User, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { PlatformIcon } from "@/components/platform-icon";
 import type { Database } from "@/lib/types/database";
 
 type Message = Database["public"]["Tables"]["messages"]["Row"];
@@ -268,15 +269,29 @@ export function MessageThread({
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
-            {conversation.contacts?.display_name?.[0]?.toUpperCase() ?? "?"}
+          <div className="relative">
+            {conversation.contacts?.avatar_url ? (
+              <img
+                src={conversation.contacts.avatar_url}
+                alt=""
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                {conversation.contacts?.display_name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+            <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-background bg-background">
+              <PlatformIcon
+                platform={conversation.platform}
+                className="h-2.5 w-2.5"
+                size={10}
+              />
+            </div>
           </div>
           <div>
             <p className="text-sm font-medium">
               {conversation.contacts?.display_name ?? "Unknown"}
-            </p>
-            <p className="text-xs capitalize text-muted-foreground">
-              {conversation.platform}
             </p>
           </div>
         </div>

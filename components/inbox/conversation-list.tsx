@@ -4,28 +4,11 @@ import { useState, useEffect } from "react";
 import { Search, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { PlatformIcon } from "@/components/platform-icon";
 import type { Database, Platform, ConversationStatus } from "@/lib/types/database";
 
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"] & {
   contacts: Database["public"]["Tables"]["contacts"]["Row"] | null;
-};
-
-const platformIcons: Record<Platform, string> = {
-  facebook: "f",
-  instagram: "ig",
-  twitter: "x",
-  telegram: "tg",
-  bluesky: "bs",
-  reddit: "r",
-};
-
-const platformColors: Record<Platform, string> = {
-  facebook: "bg-blue-500",
-  instagram: "bg-gradient-to-br from-purple-500 to-pink-500",
-  twitter: "bg-black",
-  telegram: "bg-sky-500",
-  bluesky: "bg-blue-400",
-  reddit: "bg-orange-500",
 };
 
 function formatTime(dateStr: string | null): string {
@@ -183,17 +166,24 @@ export function ConversationList({
             >
               {/* Avatar with platform badge */}
               <div className="relative flex-shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                  {conversation.contacts?.display_name?.[0]?.toUpperCase() ?? "?"}
+                {conversation.contacts?.avatar_url ? (
+                  <img
+                    src={conversation.contacts.avatar_url}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                    {conversation.contacts?.display_name?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-background bg-background">
+                  <PlatformIcon
+                    platform={conversation.platform}
+                    className="h-3 w-3"
+                    size={12}
+                  />
                 </div>
-                <span
-                  className={cn(
-                    "absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white",
-                    platformColors[conversation.platform]
-                  )}
-                >
-                  {platformIcons[conversation.platform]}
-                </span>
               </div>
 
               {/* Content */}

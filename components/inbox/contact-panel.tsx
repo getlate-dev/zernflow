@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { PlatformIcon } from "@/components/platform-icon";
 import type { Database, Platform } from "@/lib/types/database";
 
 type Contact = Database["public"]["Tables"]["contacts"]["Row"];
@@ -170,8 +171,7 @@ export function ContactPanel({
             {/* Connected platforms */}
             {details.channels.length > 0 && (
               <div>
-                <h4 className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground">
-                  <ExternalLink className="h-3 w-3" />
+                <h4 className="text-xs font-medium uppercase text-muted-foreground">
                   Platforms
                 </h4>
                 <div className="mt-2 space-y-1.5">
@@ -180,6 +180,11 @@ export function ContactPanel({
                       key={i}
                       className="flex items-center gap-2 text-sm"
                     >
+                      <PlatformIcon
+                        platform={ch.platform}
+                        className="h-3.5 w-3.5"
+                        size={14}
+                      />
                       <span className="capitalize text-muted-foreground">
                         {ch.platform}
                       </span>

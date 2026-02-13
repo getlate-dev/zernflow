@@ -8,8 +8,8 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  Hash,
 } from "lucide-react";
+import { PlatformIcon } from "@/components/platform-icon";
 
 export default async function ContactDetailPage({
   params,
@@ -153,28 +153,36 @@ export default async function ContactDetailPage({
               <p className="text-sm text-muted-foreground/60">No channels</p>
             ) : (
               <div className="space-y-2">
-                {channels.map((cc) => (
-                  <div
-                    key={cc.id}
-                    className="flex items-center gap-3 rounded-lg border border-border p-3"
-                  >
-                    <Hash className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">
-                        {(cc.channels as { display_name?: string })
-                          ?.display_name ??
-                          (cc.channels as { username?: string })?.username ??
-                          "Unknown"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {(cc.channels as { platform?: string })?.platform} ·{" "}
-                        {cc.platform_username
-                          ? `@${cc.platform_username}`
-                          : cc.platform_sender_id}
-                      </p>
+                {channels.map((cc) => {
+                  const ch = cc.channels as {
+                    platform?: string;
+                    display_name?: string;
+                    username?: string;
+                  } | null;
+                  return (
+                    <div
+                      key={cc.id}
+                      className="flex items-center gap-3 rounded-lg border border-border p-3"
+                    >
+                      <PlatformIcon
+                        platform={ch?.platform ?? ""}
+                        className="h-4 w-4"
+                        size={16}
+                      />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {ch?.display_name ?? ch?.username ?? "Unknown"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {ch?.platform} ·{" "}
+                          {cc.platform_username
+                            ? `@${cc.platform_username}`
+                            : cc.platform_sender_id}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -196,7 +204,11 @@ export default async function ContactDetailPage({
                     href="/dashboard/inbox"
                     className="flex items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/50"
                   >
-                    <MessageSquare className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <PlatformIcon
+                      platform={conv.platform}
+                      className="mt-0.5 h-4 w-4"
+                      size={16}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-medium capitalize text-muted-foreground">
