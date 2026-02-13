@@ -30,6 +30,7 @@ import { SendMessageNode } from "./nodes/send-message-node";
 import { ConditionNode } from "./nodes/condition-node";
 import { DelayNode } from "./nodes/delay-node";
 import { ActionNode } from "./nodes/action-node";
+import { AiResponseNode } from "./nodes/AiResponseNode";
 import { NodeConfigSidebar } from "./panels/NodeConfigSidebar";
 
 type Flow = Database["public"]["Tables"]["flows"]["Row"];
@@ -40,6 +41,7 @@ const nodeTypes: NodeTypes = {
   condition: ConditionNode,
   delay: DelayNode,
   action: ActionNode,
+  aiResponse: AiResponseNode,
 };
 
 interface FlowCanvasProps {
@@ -61,6 +63,8 @@ function getDefaultData(type: string, actionType?: string): Record<string, unkno
       return { conditions: [], logic: "and" };
     case "delay":
       return { duration: 5, unit: "minutes" };
+    case "aiResponse":
+      return { systemPrompt: "", model: "gpt-4o-mini", temperature: 0.7, maxTokens: 500, contextMessages: 10 };
     case "action":
       return { actionType: actionType || "addTag" };
     default:

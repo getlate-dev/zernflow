@@ -11,9 +11,14 @@ import {
   TrendingUp,
   Send,
   Eye,
+  Link2,
+  Copy,
+  Check,
+  Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { PlatformIcon } from "@/components/platform-icon";
 import type { Database, Json, Platform } from "@/lib/types/database";
 
 type Channel = Database["public"]["Tables"]["channels"]["Row"];
@@ -48,6 +53,41 @@ const platformLabels: Record<Platform, string> = {
   bluesky: "Bluesky",
   reddit: "Reddit",
 };
+
+function getDmDeepLink(
+  platform: Platform,
+  username: string | null,
+  lateAccountId: string
+): { url: string | null; label: string } {
+  const handle = username || lateAccountId;
+  switch (platform) {
+    case "instagram":
+      return username
+        ? { url: `https://ig.me/m/${username}`, label: `ig.me/m/${username}` }
+        : { url: null, label: "No username available" };
+    case "facebook":
+      return { url: `https://m.me/${handle}`, label: `m.me/${handle}` };
+    case "telegram":
+      return username
+        ? { url: `https://t.me/${username}`, label: `t.me/${username}` }
+        : { url: null, label: "No username available" };
+    case "twitter":
+      return username
+        ? { url: `https://x.com/${username}`, label: `x.com/${username}` }
+        : { url: null, label: "No username available" };
+    case "reddit":
+      return username
+        ? {
+            url: `https://reddit.com/message/compose/?to=${username}`,
+            label: `reddit.com/message/compose/?to=${username}`,
+          }
+        : { url: null, label: "No username available" };
+    case "bluesky":
+      return { url: null, label: "DM links not supported" };
+    default:
+      return { url: null, label: "Not supported" };
+  }
+}
 
 export function GrowthView({
   workspaceId,
@@ -241,6 +281,11 @@ export function GrowthView({
             sublabel="Comments to DMs"
           />
         </div>
+
+        {/* Conversation Starter Links */}
+        {channels.length > 0 && (
+          <ConversationStarterLinks channels={channels} />
+        )}
 
         {/* Create form */}
         {showCreate && (
@@ -667,6 +712,113 @@ export function GrowthView({
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ConversationStarterLinks({ channels }: { channels: Channel[] }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  async function handleCopy(url: string, channelId: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(channelId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopiedId(channelId);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2">
+        <Link2 className="h-4 w-4 text-gray-500" />
+        <h2 className="text-lg font-semibold text-gray-900">
+          Conversation Starter Links
+        </h2>
+      </div>
+      <p className="mt-1 text-sm text-gray-500">
+        Share these links to let people start a DM conversation with your
+        connected accounts.
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {channels.map((channel) => {
+          const { url, label } = getDmDeepLink(
+            channel.platform,
+            channel.username,
+            channel.late_account_id
+          );
+          const displayName =
+            channel.display_name ||
+            channel.username ||
+            platformLabels[channel.platform];
+
+          return (
+            <div
+              key={channel.id}
+              className="rounded-xl border border-gray-200 bg-white p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-50">
+                  <PlatformIcon platform={channel.platform} size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {displayName}
+                  </p>
+                  <p className="text-[11px] text-gray-400">
+                    {platformLabels[channel.platform]}
+                  </p>
+                </div>
+              </div>
+
+              {url ? (
+                <div className="mt-3 flex items-center gap-2">
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 truncate rounded-md bg-gray-50 px-3 py-1.5 text-xs font-mono text-primary hover:underline"
+                    title={url}
+                  >
+                    {label}
+                  </a>
+                  <button
+                    onClick={() => handleCopy(url, channel.id)}
+                    className={cn(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+                      copiedId === channel.id
+                        ? "border-green-200 bg-green-50 text-green-600"
+                        : "border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                    )}
+                    title={copiedId === channel.id ? "Copied!" : "Copy link"}
+                  >
+                    {copiedId === channel.id ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 flex items-center gap-2 rounded-md bg-gray-50 px-3 py-1.5">
+                  <Ban className="h-3 w-3 text-gray-400" />
+                  <span className="text-xs text-gray-400">{label}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

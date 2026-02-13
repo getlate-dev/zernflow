@@ -56,7 +56,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 sm:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5">
-            <span className="text-xs font-medium text-indigo-700">Open source ManyChat alternative</span>
+            <span className="text-xs font-medium text-indigo-700">MIT Licensed</span>
             <Link
               href="https://github.com/getlate-dev/zernflow"
               target="_blank"
@@ -67,12 +67,12 @@ export default function Home() {
             </Link>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-            Automate your DMs and comments.{" "}
-            <span className="text-indigo-600">Own your data.</span>
+            The Open Source{" "}
+            <span className="text-indigo-600">ManyChat Alternative</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-500">
-            The open source chat automation platform for Instagram, Facebook, Telegram,
-            X, Bluesky, and Reddit. Like ManyChat, but free, open source, and works on 6 platforms.
+            Automate DMs, comments, and flows across Instagram, Facebook, Telegram,
+            X, Bluesky, and Reddit. Free, self-hostable, and built for developers.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

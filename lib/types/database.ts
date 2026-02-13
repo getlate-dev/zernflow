@@ -53,7 +53,20 @@ export type NodeType =
   | "commentReply"
   | "privateReply"
   | "abSplit"
-  | "smartDelay";
+  | "smartDelay"
+  | "aiResponse"
+  | "enrollSequence";
+
+export type SequenceStatus = "draft" | "active" | "paused";
+export type SequenceEnrollmentStatus = "active" | "completed" | "cancelled";
+
+export interface SequenceStep {
+  type: "message" | "delay";
+  /** Message text (for message steps) */
+  content?: string;
+  /** Delay in minutes (for delay steps) */
+  delayMinutes?: number;
+}
 
 export interface Database {
   public: {
@@ -816,6 +829,43 @@ export interface Database {
           },
         ];
       };
+      workspace_invites: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          email: string;
+          role: string;
+          invited_by: string;
+          status: string;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          email: string;
+          role?: string;
+          invited_by: string;
+          status?: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          email?: string;
+          role?: string;
+          status?: string;
+          expires_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invites_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       comment_logs: {
         Row: {
           id: string;
@@ -875,6 +925,97 @@ export interface Database {
             columns: ["matched_trigger_id"];
             isOneToOne: false;
             referencedRelation: "triggers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sequences: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          description: string | null;
+          status: SequenceStatus;
+          steps: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          description?: string | null;
+          status?: SequenceStatus;
+          steps?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          status?: SequenceStatus;
+          steps?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sequences_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sequence_enrollments: {
+        Row: {
+          id: string;
+          sequence_id: string;
+          contact_id: string;
+          channel_id: string;
+          current_step_index: number;
+          status: SequenceEnrollmentStatus;
+          enrolled_at: string;
+          next_step_at: string | null;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          sequence_id: string;
+          contact_id: string;
+          channel_id: string;
+          current_step_index?: number;
+          status?: SequenceEnrollmentStatus;
+          enrolled_at?: string;
+          next_step_at?: string | null;
+          completed_at?: string | null;
+        };
+        Update: {
+          current_step_index?: number;
+          status?: SequenceEnrollmentStatus;
+          next_step_at?: string | null;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sequence_enrollments_sequence_id_fkey";
+            columns: ["sequence_id"];
+            isOneToOne: false;
+            referencedRelation: "sequences";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sequence_enrollments_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sequence_enrollments_channel_id_fkey";
+            columns: ["channel_id"];
+            isOneToOne: false;
+            referencedRelation: "channels";
             referencedColumns: ["id"];
           },
         ];

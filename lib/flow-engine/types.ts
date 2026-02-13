@@ -29,7 +29,9 @@ export type NodeData =
   | SmartDelayNodeData
   | SubscribeNodeData
   | CommentReplyNodeData
-  | PrivateReplyNodeData;
+  | PrivateReplyNodeData
+  | AiResponseNodeData
+  | EnrollSequenceNodeData;
 
 export interface TriggerNodeData {
   triggerType: string;
@@ -51,6 +53,19 @@ export interface SendMessageNodeData {
       payload?: string;
       url?: string;
     }>;
+    carousel?: {
+      elements: Array<{
+        imageUrl?: string;
+        title: string;
+        subtitle?: string;
+        buttons?: Array<{
+          type: "postback" | "url";
+          title: string;
+          payload?: string;
+          url?: string;
+        }>;
+      }>;
+    };
   }>;
 }
 
@@ -117,6 +132,20 @@ export interface PrivateReplyNodeData {
   /** Text to send as a private DM to the commenter. Supports {{variable}} interpolation. */
   text: string;
   imageUrl?: string;
+}
+
+export interface AiResponseNodeData {
+  label?: string;
+  model: "gpt-4o-mini" | "gpt-4o";
+  systemPrompt: string;
+  temperature: number;
+  maxTokens: number;
+  contextMessages: number;
+}
+
+export interface EnrollSequenceNodeData {
+  /** The ID of the sequence to enroll the contact into */
+  sequenceId: string;
 }
 
 export interface FlowExecutionContext {

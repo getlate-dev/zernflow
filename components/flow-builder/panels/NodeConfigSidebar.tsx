@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { X, Trash2, Zap, MessageSquare, GitBranch, Clock, Cog } from "lucide-react";
+import { X, Trash2, Zap, MessageSquare, GitBranch, Clock, Cog, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Node } from "@xyflow/react";
 
@@ -10,6 +10,7 @@ import { SendMessagePanel } from "./SendMessagePanel";
 import { ConditionPanel } from "./ConditionPanel";
 import { DelayPanel } from "./DelayPanel";
 import { ActionPanel } from "./ActionPanel";
+import { AiResponsePanel } from "./AiResponsePanel";
 
 interface NodeConfigSidebarProps {
   node: Node;
@@ -42,6 +43,12 @@ const nodeTypeConfig: Record<string, { label: string; icon: typeof Cog; color: s
     icon: Clock,
     color: "bg-purple-500",
     borderColor: "border-purple-500",
+  },
+  aiResponse: {
+    label: "AI Response",
+    icon: Sparkles,
+    color: "bg-violet-500",
+    borderColor: "border-violet-500",
   },
   action: {
     label: "Action",
@@ -92,6 +99,8 @@ export function NodeConfigSidebar({ node, onChange, onClose, onDelete }: NodeCon
         return <ConditionPanel data={data} onChange={handleChange} />;
       case "delay":
         return <DelayPanel data={data} onChange={handleChange} />;
+      case "aiResponse":
+        return <AiResponsePanel data={data} onChange={handleChange} />;
       case "action":
         return <ActionPanel data={data} onChange={handleChange} />;
       default:

@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NodeType } from "@/lib/types/database";
+import { EnrollSequencePanel } from "./EnrollSequencePanel";
 
 interface ActionPanelData {
   actionType?: NodeType;
@@ -23,6 +24,7 @@ interface ActionPanelData {
   timeout?: number;
   timeoutUnit?: string;
   confirmed?: boolean;
+  sequenceId?: string;
   [key: string]: unknown;
 }
 
@@ -59,6 +61,8 @@ export function ActionPanel({ data: rawData, onChange }: ActionPanelProps) {
       return <ABSplitConfig data={data} onChange={onChange} />;
     case "smartDelay":
       return <SmartDelayConfig data={data} onChange={onChange} />;
+    case "enrollSequence":
+      return <EnrollSequencePanel data={rawData} onChange={onChange} />;
     default:
       return (
         <p className="text-sm text-gray-500">

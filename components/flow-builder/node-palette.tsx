@@ -13,6 +13,8 @@ import {
   Bell,
   Shuffle,
   Hourglass,
+  Sparkles,
+  ListOrdered,
 } from "lucide-react";
 import type { DragEvent } from "react";
 
@@ -44,6 +46,12 @@ const categories: PaletteCategory[] = [
         nodeType: "sendMessage",
         label: "Send Message",
         icon: MessageSquare,
+      },
+      {
+        type: "aiResponse",
+        nodeType: "aiResponse",
+        label: "AI Response",
+        icon: Sparkles,
       },
     ],
   },
@@ -126,6 +134,13 @@ const categories: PaletteCategory[] = [
         label: "Unsubscribe",
         icon: Bell,
         actionType: "unsubscribe",
+      },
+      {
+        type: "action",
+        nodeType: "enrollSequence",
+        label: "Enroll in Sequence",
+        icon: ListOrdered,
+        actionType: "enrollSequence",
       },
     ],
   },
