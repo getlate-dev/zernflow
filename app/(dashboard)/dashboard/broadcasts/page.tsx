@@ -1,10 +1,8 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
 import { BroadcastsView } from "./broadcasts-view";
 
 export default async function BroadcastsPage() {
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const { data: broadcasts } = await supabase
     .from("broadcasts")

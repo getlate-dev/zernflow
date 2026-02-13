@@ -36,6 +36,8 @@ function formatDate(dateString: string) {
 async function createFlow(formData: FormData) {
   "use server";
 
+  // Server actions run in a new request context, so cache won't help here.
+  // This is fine since it's a rare user action, not a page load.
   const { workspace } = await getWorkspace();
   const supabase = await createClient();
 
@@ -59,8 +61,7 @@ async function createFlow(formData: FormData) {
 }
 
 export default async function FlowsPage() {
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const { data: flows } = await supabase
     .from("flows")

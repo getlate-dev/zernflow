@@ -1,5 +1,4 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { FlowCanvas } from "@/components/flow-builder/flow-canvas";
 
@@ -9,8 +8,7 @@ export default async function FlowEditorPage({
   params: Promise<{ flowId: string }>;
 }) {
   const { flowId } = await params;
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const { data: flow } = await supabase
     .from("flows")

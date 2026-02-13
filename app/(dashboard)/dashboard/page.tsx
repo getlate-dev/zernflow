@@ -1,9 +1,7 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const [
     { count: flowCount },

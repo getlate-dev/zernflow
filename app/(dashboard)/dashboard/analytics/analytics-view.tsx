@@ -45,6 +45,13 @@ interface DailyMessages {
   failed: number;
 }
 
+interface AnalyticsData {
+  stats: Stats;
+  flowPerformance: FlowPerformance[];
+  contactGrowth: DailyCount[];
+  messageVolume: DailyMessages[];
+}
+
 // --- Helpers ---
 
 function getDateRange(range: TimeRange): { start: string; end: string } {
@@ -105,25 +112,35 @@ function MiniBarChart({
 
 // --- Main component ---
 
-export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
+export function AnalyticsView({
+  workspaceId,
+  initialData,
+}: {
+  workspaceId: string;
+  initialData: AnalyticsData;
+}) {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const [stats, setStats] = useState<Stats>({
-    totalFlows: 0,
-    totalContacts: 0,
-    messagesSent: 0,
-    messagesFailed: 0,
-  });
-  const [flowPerformance, setFlowPerformance] = useState<FlowPerformance[]>([]);
-  const [contactGrowth, setContactGrowth] = useState<DailyCount[]>([]);
-  const [messageVolume, setMessageVolume] = useState<DailyMessages[]>([]);
+  const [stats, setStats] = useState<Stats>(initialData.stats);
+  const [flowPerformance, setFlowPerformance] = useState<FlowPerformance[]>(initialData.flowPerformance);
+  const [contactGrowth, setContactGrowth] = useState<DailyCount[]>(initialData.contactGrowth);
+  const [messageVolume, setMessageVolume] = useState<DailyMessages[]>(initialData.messageVolume);
 
+  // Only refetch when user changes time range away from the default 30d
   useEffect(() => {
+    if (timeRange === "30d") {
+      // Reset to server-provided data
+      setStats(initialData.stats);
+      setFlowPerformance(initialData.flowPerformance);
+      setContactGrowth(initialData.contactGrowth);
+      setMessageVolume(initialData.messageVolume);
+      return;
+    }
     fetchAnalytics();
-  }, [timeRange, workspaceId]);
+  }, [timeRange]);
 
   async function fetchAnalytics() {
     setLoading(true);
@@ -135,8 +152,7 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
         : getDateRange(timeRange);
 
     try {
-      // Fetch stats in parallel
-      const [flowsRes, contactsRes, sentRes, failedRes] = await Promise.all([
+      const [flowsRes, contactsRes, sentRes, failedRes, startsRes, completionsRes, flowsListRes, contactEvents, msgEvents] = await Promise.all([
         supabase
           .from("flows")
           .select("*", { count: "exact", head: true })
@@ -159,17 +175,6 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
           .eq("event_type", "message_failed")
           .gte("created_at", range.start)
           .lte("created_at", range.end),
-      ]);
-
-      setStats({
-        totalFlows: flowsRes.count ?? 0,
-        totalContacts: contactsRes.count ?? 0,
-        messagesSent: sentRes.count ?? 0,
-        messagesFailed: failedRes.count ?? 0,
-      });
-
-      // Flow performance: starts and completions
-      const [startsRes, completionsRes, flowsListRes] = await Promise.all([
         supabase
           .from("analytics_events")
           .select("flow_id")
@@ -190,97 +195,71 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
           .from("flows")
           .select("id, name")
           .eq("workspace_id", workspaceId),
+        supabase
+          .from("analytics_events")
+          .select("created_at")
+          .eq("workspace_id", workspaceId)
+          .eq("event_type", "contact_created")
+          .gte("created_at", range.start)
+          .lte("created_at", range.end)
+          .order("created_at"),
+        supabase
+          .from("analytics_events")
+          .select("event_type, created_at")
+          .eq("workspace_id", workspaceId)
+          .in("event_type", ["message_sent", "message_failed"])
+          .gte("created_at", range.start)
+          .lte("created_at", range.end)
+          .order("created_at"),
       ]);
 
+      setStats({
+        totalFlows: flowsRes.count ?? 0,
+        totalContacts: contactsRes.count ?? 0,
+        messagesSent: sentRes.count ?? 0,
+        messagesFailed: failedRes.count ?? 0,
+      });
+
+      // Flow performance
       const flowNames = new Map(
         (flowsListRes.data ?? []).map((f) => [f.id, f.name])
       );
-
-      // Count starts per flow
       const startCounts = new Map<string, number>();
       (startsRes.data ?? []).forEach((e) => {
-        if (e.flow_id) {
-          startCounts.set(e.flow_id, (startCounts.get(e.flow_id) ?? 0) + 1);
-        }
+        if (e.flow_id) startCounts.set(e.flow_id, (startCounts.get(e.flow_id) ?? 0) + 1);
       });
-
-      // Count completions per flow
       const completionCounts = new Map<string, number>();
       (completionsRes.data ?? []).forEach((e) => {
-        if (e.flow_id) {
-          completionCounts.set(
-            e.flow_id,
-            (completionCounts.get(e.flow_id) ?? 0) + 1
-          );
-        }
+        if (e.flow_id) completionCounts.set(e.flow_id, (completionCounts.get(e.flow_id) ?? 0) + 1);
       });
-
-      // Merge into performance data
-      const allFlowIds = new Set([
-        ...startCounts.keys(),
-        ...completionCounts.keys(),
-      ]);
+      const allFlowIds = new Set([...startCounts.keys(), ...completionCounts.keys()]);
       const perfData: FlowPerformance[] = Array.from(allFlowIds)
         .map((fid) => {
           const starts = startCounts.get(fid) ?? 0;
           const completions = completionCounts.get(fid) ?? 0;
-          const dropOffRate =
-            starts > 0
-              ? Math.round(((starts - completions) / starts) * 100)
-              : 0;
-          return {
-            id: fid,
-            name: flowNames.get(fid) ?? "Unknown Flow",
-            starts,
-            completions,
-            dropOffRate,
-          };
+          const dropOffRate = starts > 0 ? Math.round(((starts - completions) / starts) * 100) : 0;
+          return { id: fid, name: flowNames.get(fid) ?? "Unknown Flow", starts, completions, dropOffRate };
         })
         .sort((a, b) => b.starts - a.starts)
         .slice(0, 10);
-
       setFlowPerformance(perfData);
 
       // Contact growth by day
-      const contactEvents = await supabase
-        .from("analytics_events")
-        .select("created_at")
-        .eq("workspace_id", workspaceId)
-        .eq("event_type", "contact_created")
-        .gte("created_at", range.start)
-        .lte("created_at", range.end)
-        .order("created_at");
-
       const growthByDay = new Map<string, number>();
       (contactEvents.data ?? []).forEach((e) => {
         const day = e.created_at.split("T")[0];
         growthByDay.set(day, (growthByDay.get(day) ?? 0) + 1);
       });
-
-      // Fill in missing days
       const startDate = new Date(range.start);
       const endDate = new Date(range.end);
       const growthData: DailyCount[] = [];
-      for (
-        let d = new Date(startDate);
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-      ) {
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dayStr = d.toISOString().split("T")[0];
         growthData.push({ date: dayStr, count: growthByDay.get(dayStr) ?? 0 });
       }
       setContactGrowth(growthData);
 
       // Message volume by day
-      const msgEvents = await supabase
-        .from("analytics_events")
-        .select("event_type, created_at")
-        .eq("workspace_id", workspaceId)
-        .in("event_type", ["message_sent", "message_failed"])
-        .gte("created_at", range.start)
-        .lte("created_at", range.end)
-        .order("created_at");
-
       const sentByDay = new Map<string, number>();
       const failedByDay = new Map<string, number>();
       (msgEvents.data ?? []).forEach((e) => {
@@ -291,19 +270,10 @@ export function AnalyticsView({ workspaceId }: { workspaceId: string }) {
           failedByDay.set(day, (failedByDay.get(day) ?? 0) + 1);
         }
       });
-
       const msgData: DailyMessages[] = [];
-      for (
-        let d = new Date(startDate);
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-      ) {
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dayStr = d.toISOString().split("T")[0];
-        msgData.push({
-          date: dayStr,
-          sent: sentByDay.get(dayStr) ?? 0,
-          failed: failedByDay.get(dayStr) ?? 0,
-        });
+        msgData.push({ date: dayStr, sent: sentByDay.get(dayStr) ?? 0, failed: failedByDay.get(dayStr) ?? 0 });
       }
       setMessageVolume(msgData);
     } catch (err) {

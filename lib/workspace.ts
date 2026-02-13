@@ -1,7 +1,11 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export async function getWorkspace() {
+/**
+ * Cached per-request: deduplicates across layout + page in the same render.
+ */
+export const getWorkspace = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,5 +26,6 @@ export async function getWorkspace() {
     user,
     workspace: membership.workspaces,
     role: membership.role,
+    supabase,
   };
-}
+});

@@ -1,10 +1,8 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
 import { ContactsView } from "./contacts-view";
 
 export default async function ContactsPage() {
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const [contactsRes, tagsRes] = await Promise.all([
     supabase

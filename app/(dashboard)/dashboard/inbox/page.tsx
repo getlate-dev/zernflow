@@ -1,10 +1,8 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
 import { InboxView } from "./inbox-view";
 
 export default async function InboxPage() {
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
+  const { workspace, supabase } = await getWorkspace();
 
   const { data: conversations } = await supabase
     .from("conversations")
