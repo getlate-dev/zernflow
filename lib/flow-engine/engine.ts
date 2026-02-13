@@ -89,6 +89,15 @@ export async function executeFlow(
 
   if (!session) return;
 
+  // Track flow_started
+  await supabase.from("analytics_events").insert({
+    workspace_id: context.workspaceId,
+    flow_id: context.flowId,
+    contact_id: context.contactId,
+    event_type: "flow_started",
+    metadata: { triggerId: context.triggerId },
+  });
+
   // Find the trigger node (entry point)
   const triggerNode = nodes.find((n) => n.type === "trigger");
   if (!triggerNode) return;
@@ -347,6 +356,13 @@ async function executeSendMessage(
         platform_message_id: response.data?.data?.messageId || null,
         status: "sent",
       });
+
+      await supabase.from("analytics_events").insert({
+        workspace_id: context.workspaceId,
+        flow_id: context.flowId,
+        contact_id: context.contactId,
+        event_type: "message_sent",
+      });
     } catch (error) {
       console.error("Failed to send message:", error);
       await supabase.from("messages").insert({
@@ -355,6 +371,14 @@ async function executeSendMessage(
         text,
         sent_by_flow_id: context.flowId,
         status: "failed",
+      });
+
+      await supabase.from("analytics_events").insert({
+        workspace_id: context.workspaceId,
+        flow_id: context.flowId,
+        contact_id: context.contactId,
+        event_type: "message_failed",
+        metadata: { error: error instanceof Error ? error.message : "Unknown error" },
       });
     }
 
@@ -771,10 +795,29 @@ async function completeSession(
   supabase: SupabaseClient<Database>,
   sessionId: string
 ) {
-  await supabase
+  const { data: session } = await supabase
     .from("flow_sessions")
     .update({ status: "completed" })
-    .eq("id", sessionId);
+    .eq("id", sessionId)
+    .select("flow_id, contact_id, channel_id")
+    .single();
+
+  if (session) {
+    const { data: flow } = await supabase
+      .from("flows")
+      .select("workspace_id")
+      .eq("id", session.flow_id)
+      .single();
+
+    if (flow) {
+      await supabase.from("analytics_events").insert({
+        workspace_id: flow.workspace_id,
+        flow_id: session.flow_id,
+        contact_id: session.contact_id,
+        event_type: "flow_completed",
+      });
+    }
+  }
 }
 
 function interpolateVariables(

@@ -173,6 +173,12 @@ async function handleWebhook(request: NextRequest) {
       platform_sender_id: senderId,
       platform_username: msg.sender.username || null,
     });
+
+    await supabase.from("analytics_events").insert({
+      workspace_id: channel.workspace_id,
+      contact_id: contactId,
+      event_type: "contact_created",
+    });
   }
 
   // ── Upsert conversation ──────────────────────────────────────────────────
