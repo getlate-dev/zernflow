@@ -81,6 +81,11 @@ async function handleWebhook(request: NextRequest) {
 
   const { message: msg, conversation: conv, account, metadata } = payload;
 
+  // Ignore outbound messages (sent by the bot itself) to prevent loops
+  if (msg.direction === "outbound") {
+    return NextResponse.json({ ok: true, skipped: true });
+  }
+
   const supabase = await createServiceClient();
 
   // Look up channel by late_account_id
