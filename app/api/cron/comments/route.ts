@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { createLateClient } from "@/lib/late-client";
 import { processComment } from "@/lib/comment-processor";
 import type { Database } from "@/lib/types/database";
 
@@ -8,17 +9,16 @@ type Trigger = Database["public"]["Tables"]["triggers"]["Row"];
 
 /**
  * Comment polling cron handler.
- * Called by Vercel Cron or external scheduler every 60 seconds.
+ * Called by Vercel Cron every 5 minutes.
  *
  * GET /api/cron/comments?key=CRON_SECRET
  *
  * For each active channel with comment_keyword triggers:
- * 1. Fetch recent posts from Late API history
+ * 1. Fetch posts via Late SDK inbox/comments (covers ALL posts, not just Late-published)
  * 2. Fetch comments for each post
- * 3. Filter to only new comments (after cursor)
- * 4. Match against comment_keyword triggers
- * 5. Process matches (upsert contact, reply, DM via flow)
- * 6. Update cursor
+ * 3. Match against comment_keyword triggers
+ * 4. Process matches (upsert contact, reply, DM via flow)
+ * 5. Update cursor
  */
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -138,23 +138,17 @@ async function pollChannelComments(
     return { processed: 0, matched: 0, errors: 0 };
   }
 
-  const apiKey = workspace.late_api_key_encrypted;
+  const late = createLateClient(workspace.late_api_key_encrypted);
 
   // Fetch posts from the inbox/comments endpoint (covers ALL posts, not just Late-published)
   let posts: Array<{ id: string; commentCount: number }>;
   try {
-    const res = await fetch(
-      `https://getlate.dev/api/v1/inbox/comments?accountId=${channel.late_account_id}`,
-      { headers: { Authorization: `Bearer ${apiKey}` } }
-    );
+    const res = await late.comments.listInboxComments({
+      query: { accountId: channel.late_account_id },
+    });
 
-    if (!res.ok) {
-      console.error(`Failed to fetch inbox comments for channel ${channel.id}: ${res.status}`);
-      return { processed: 0, matched: 0, errors: 1 };
-    }
-
-    const data = await res.json();
-    posts = (data.data ?? []).map((item: any) => ({
+    const items = (res.data as any)?.data ?? [];
+    posts = items.map((item: any) => ({
       id: item.id,
       commentCount: item.commentCount ?? 0,
     }));
@@ -167,24 +161,19 @@ async function pollChannelComments(
     return { processed: 0, matched: 0, errors: 0 };
   }
 
-  const cursor = channel.last_comment_cursor;
-  let latestCommentId = cursor;
   let processed = 0;
   let matched = 0;
   let errors = 0;
 
   for (const post of posts) {
     try {
-      const commentsRes = await fetch(
-        `https://getlate.dev/api/v1/inbox/comments/${post.id}?accountId=${channel.late_account_id}`,
-        { headers: { Authorization: `Bearer ${apiKey}` } }
-      );
+      const commentsRes = await late.comments.getInboxPostComments({
+        path: { postId: post.id },
+        query: { accountId: channel.late_account_id },
+      });
 
-      if (!commentsRes.ok) continue;
-
-      const commentsData = await commentsRes.json();
       // Flatten top-level comments and their replies
-      const rawComments = commentsData.comments ?? [];
+      const rawComments = (commentsRes.data as any)?.comments ?? [];
       const allComments: any[] = [];
       for (const c of rawComments) {
         allComments.push(c);
@@ -233,9 +222,6 @@ async function pollChannelComments(
         processed++;
         if (result.matched) matched++;
         if (result.error) errors++;
-
-        // Track the latest comment ID we processed
-        latestCommentId = comment.id;
       }
     } catch (err) {
       console.error(
@@ -244,14 +230,6 @@ async function pollChannelComments(
       );
       errors++;
     }
-  }
-
-  // Update the cursor if we processed anything new
-  if (latestCommentId && latestCommentId !== cursor) {
-    await supabase
-      .from("channels")
-      .update({ last_comment_cursor: latestCommentId })
-      .eq("id", channel.id);
   }
 
   return { processed, matched, errors };
