@@ -94,7 +94,7 @@ export async function enrollContact(
   if (!sequence) return { error: "Sequence not found" };
   if (sequence.status !== "active") return { error: "Sequence is not active" };
 
-  const steps = (sequence.steps as SequenceStep[]) || [];
+  const steps = (sequence.steps as unknown as SequenceStep[]) || [];
   if (steps.length === 0) return { error: "Sequence has no steps" };
 
   // Calculate next_step_at based on first step
