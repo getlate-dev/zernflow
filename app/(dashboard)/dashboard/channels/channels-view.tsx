@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Plug,
+  Plus,
   Power,
   PowerOff,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +24,15 @@ const platformLabels: Record<Platform, string> = {
   bluesky: "Bluesky",
   reddit: "Reddit",
 };
+
+const connectablePlatforms: { id: Platform; label: string }[] = [
+  { id: "instagram", label: "Instagram" },
+  { id: "facebook", label: "Facebook" },
+  { id: "twitter", label: "X / Twitter" },
+  { id: "telegram", label: "Telegram" },
+  { id: "bluesky", label: "Bluesky" },
+  { id: "reddit", label: "Reddit" },
+];
 
 function getPlatformLabel(platform: string): string {
   return (
@@ -40,6 +51,50 @@ export function ChannelsView({
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [showPlatformPicker, setShowPlatformPicker] = useState(false);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  // Close picker on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPlatformPicker(false);
+      }
+    }
+    if (showPlatformPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showPlatformPicker]);
+
+  async function handleConnect(platform: Platform) {
+    setConnecting(platform);
+    try {
+      const res = await fetch("/api/v1/channels/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setSyncMessage(data.error || "Failed to connect");
+        setTimeout(() => setSyncMessage(null), 4000);
+        return;
+      }
+
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
+    } catch {
+      setSyncMessage("Failed to start connection");
+      setTimeout(() => setSyncMessage(null), 4000);
+    } finally {
+      setConnecting(null);
+      setShowPlatformPicker(false);
+    }
+  }
 
   async function handleSync() {
     setSyncing(true);
@@ -119,6 +174,34 @@ export function ChannelsView({
               />
               {syncing ? "Syncing..." : "Sync"}
             </button>
+            <div className="relative" ref={pickerRef}>
+              <button
+                onClick={() => setShowPlatformPicker(!showPlatformPicker)}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                <Plus className="h-4 w-4" />
+                Connect Channel
+              </button>
+              {showPlatformPicker && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-border bg-card p-2 shadow-lg">
+                  {connectablePlatforms.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => handleConnect(p.id)}
+                      disabled={connecting === p.id}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+                    >
+                      {connecting === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <PlatformIcon platform={p.id} className="h-4 w-4" size={16} />
+                      )}
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -132,9 +215,16 @@ export function ChannelsView({
               No channels yet
             </p>
             <p className="mt-1 max-w-xs text-center text-xs text-muted-foreground/70">
-              Connect your Late API key in Settings. Your social accounts will
-              appear here automatically.
+              Connect a social media account to start building flows and
+              automating conversations.
             </p>
+            <button
+              onClick={() => setShowPlatformPicker(true)}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-4 w-4" />
+              Connect Channel
+            </button>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
