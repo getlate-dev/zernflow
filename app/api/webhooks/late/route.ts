@@ -88,6 +88,19 @@ async function handleWebhook(request: NextRequest) {
 
   const supabase = await createServiceClient();
 
+  // Idempotency: skip if this message was already processed
+  if (msg.platformMessageId) {
+    const { data: existing } = await supabase
+      .from("messages")
+      .select("id")
+      .eq("platform_message_id", msg.platformMessageId)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ ok: true, skipped: true, reason: "duplicate" });
+    }
+  }
+
   // Look up channel by late_account_id
   const { data: channel } = await supabase
     .from("channels")
