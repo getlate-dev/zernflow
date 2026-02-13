@@ -1,84 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Plug,
   Power,
   PowerOff,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { PlatformIcon } from "@/components/platform-icon";
 import type { Database, Platform } from "@/lib/types/database";
 
 type Channel = Database["public"]["Tables"]["channels"]["Row"];
 
-const platformConfig: Record<
-  Platform,
-  { label: string; color: string; bgColor: string }
-> = {
-  facebook: {
-    label: "Facebook",
-    color: "text-blue-600",
-    bgColor: "bg-blue-100",
-  },
-  instagram: {
-    label: "Instagram",
-    color: "text-pink-600",
-    bgColor: "bg-pink-100",
-  },
-  twitter: {
-    label: "X / Twitter",
-    color: "text-foreground",
-    bgColor: "bg-muted",
-  },
-  telegram: {
-    label: "Telegram",
-    color: "text-sky-600",
-    bgColor: "bg-sky-100",
-  },
-  bluesky: {
-    label: "Bluesky",
-    color: "text-blue-500",
-    bgColor: "bg-blue-100",
-  },
-  reddit: {
-    label: "Reddit",
-    color: "text-orange-600",
-    bgColor: "bg-orange-100",
-  },
-};
-
-const platformIcons: Record<string, string> = {
-  facebook: "f",
-  instagram: "ig",
-  twitter: "X",
-  telegram: "tg",
-  bluesky: "bs",
-  reddit: "r",
-  tiktok: "tk",
-  youtube: "yt",
-  linkedin: "in",
-  threads: "th",
+const platformLabels: Record<Platform, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  twitter: "X / Twitter",
+  telegram: "Telegram",
+  bluesky: "Bluesky",
+  reddit: "Reddit",
 };
 
 function getPlatformLabel(platform: string): string {
   return (
-    platformConfig[platform as Platform]?.label ||
+    platformLabels[platform as Platform] ||
     platform.charAt(0).toUpperCase() + platform.slice(1)
-  );
-}
-
-function getPlatformColor(platform: string): string {
-  return (
-    platformConfig[platform as Platform]?.color || "text-foreground"
-  );
-}
-
-function getPlatformBgColor(platform: string): string {
-  return (
-    platformConfig[platform as Platform]?.bgColor || "bg-muted"
   );
 }
 
@@ -184,15 +133,14 @@ export function ChannelsView({
               No channels yet
             </p>
             <p className="mt-1 max-w-xs text-center text-xs text-muted-foreground/70">
-              Connect your Late API key in Settings. Your social accounts will appear here automatically.
+              Connect your Late API key in Settings. Your social accounts will
+              appear here automatically.
             </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {channels.map((channel) => {
               const label = getPlatformLabel(channel.platform);
-              const color = getPlatformColor(channel.platform);
-              const bgColor = getPlatformBgColor(channel.platform);
               return (
                 <div
                   key={channel.id}
@@ -200,16 +148,34 @@ export function ChannelsView({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold",
-                          bgColor,
-                          color
+                      {/* Avatar with platform badge */}
+                      <div className="relative">
+                        {channel.profile_picture ? (
+                          <Image
+                            src={channel.profile_picture}
+                            alt={channel.display_name ?? channel.username ?? label}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                            <PlatformIcon
+                              platform={channel.platform}
+                              className="h-5 w-5"
+                            />
+                          </div>
                         )}
-                      >
-                        {platformIcons[channel.platform] ||
-                          channel.platform.slice(0, 2)}
+                        {/* Platform badge */}
+                        <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-card bg-background">
+                          <PlatformIcon
+                            platform={channel.platform}
+                            className="h-3 w-3"
+                            size={12}
+                          />
+                        </div>
                       </div>
+
                       <div>
                         <p className="text-sm font-medium">
                           {channel.display_name ??
