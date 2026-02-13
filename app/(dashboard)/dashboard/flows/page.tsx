@@ -1,8 +1,7 @@
 import { getWorkspace } from "@/lib/workspace";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, GitBranch, Sparkles } from "lucide-react";
+import { GitBranch, Sparkles } from "lucide-react";
+import { CreateFlowButton } from "@/components/create-flow-button";
 import type { FlowStatus } from "@/lib/types/database";
 
 const statusConfig: Record<FlowStatus, { label: string; classes: string }> = {
@@ -33,33 +32,6 @@ function formatDate(dateString: string) {
   });
 }
 
-async function createFlow(formData: FormData) {
-  "use server";
-
-  // Server actions run in a new request context, so cache won't help here.
-  // This is fine since it's a rare user action, not a page load.
-  const { workspace } = await getWorkspace();
-  const supabase = await createClient();
-
-  const { data: flow, error } = await supabase
-    .from("flows")
-    .insert({
-      workspace_id: workspace.id,
-      name: "Untitled Flow",
-      status: "draft",
-      nodes: [],
-      edges: [],
-    })
-    .select("id")
-    .single();
-
-  if (error || !flow) {
-    throw new Error("Failed to create flow");
-  }
-
-  redirect(`/dashboard/flows/${flow.id}`);
-}
-
 export default async function FlowsPage() {
   const { workspace, supabase } = await getWorkspace();
 
@@ -86,15 +58,7 @@ export default async function FlowsPage() {
             <Sparkles className="h-4 w-4" />
             Templates
           </Link>
-          <form action={createFlow}>
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
-            >
-              <Plus className="h-4 w-4" />
-              New Flow
-            </button>
-          </form>
+          <CreateFlowButton />
         </div>
       </div>
 
@@ -105,15 +69,9 @@ export default async function FlowsPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Create your first flow to start automating conversations.
           </p>
-          <form action={createFlow} className="mt-4">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
-            >
-              <Plus className="h-4 w-4" />
-              Create your first flow
-            </button>
-          </form>
+          <div className="mt-4">
+            <CreateFlowButton />
+          </div>
         </div>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

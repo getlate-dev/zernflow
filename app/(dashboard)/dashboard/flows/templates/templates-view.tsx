@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -278,9 +278,11 @@ const templates: FlowTemplate[] = [
 export function TemplatesView({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const [creating, setCreating] = useState<string | null>(null);
+  const pendingRef = useRef(false);
 
   async function handleUseTemplate(template: FlowTemplate) {
-    if (creating) return;
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     setCreating(template.id);
 
     try {
@@ -303,6 +305,7 @@ export function TemplatesView({ workspaceId }: { workspaceId: string }) {
       router.push(`/dashboard/flows/${flow.id}`);
     } catch (err) {
       console.error("Failed to create flow from template:", err);
+      pendingRef.current = false;
       setCreating(null);
     }
   }
