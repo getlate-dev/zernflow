@@ -10,7 +10,8 @@ export default async function SettingsPage() {
         id: workspace.id,
         name: workspace.name,
         hasApiKey: !!workspace.late_api_key_encrypted,
-        hasOpenaiKey: !!workspace.openai_api_key,
+        hasAiKey: !!workspace.ai_api_key,
+        aiProvider: workspace.ai_provider || "openai",
         globalKeywords: (workspace.global_keywords as string[]) ?? [],
       }}
     />

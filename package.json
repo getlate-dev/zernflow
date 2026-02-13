@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.43",
+    "@ai-sdk/google": "^3.0.29",
     "@ai-sdk/openai": "^3.0.28",
     "@getlatedev/node": "^0.1.18",
     "@icons-pack/react-simple-icons": "^13.11.2",

@@ -23,7 +23,7 @@ export default async function FlowEditorPage({
 
   return (
     <div className="flex h-full flex-col">
-      <FlowCanvas flow={flow} />
+      <FlowCanvas flow={flow} aiProvider={workspace.ai_provider || "openai"} />
     </div>
   );
 }

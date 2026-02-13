@@ -46,6 +46,7 @@ const nodeTypes: NodeTypes = {
 
 interface FlowCanvasProps {
   flow: Flow;
+  aiProvider?: string;
 }
 
 let nodeId = 0;
@@ -72,7 +73,7 @@ function getDefaultData(type: string, actionType?: string): Record<string, unkno
   }
 }
 
-function FlowCanvasInner({ flow }: FlowCanvasProps) {
+function FlowCanvasInner({ flow, aiProvider }: FlowCanvasProps) {
   const router = useRouter();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -334,6 +335,7 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             onChange={onNodeDataChange}
             onClose={closeSidebar}
             onDelete={deleteNode}
+            aiProvider={aiProvider}
           />
         )}
       </div>
@@ -341,10 +343,10 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
   );
 }
 
-export function FlowCanvas({ flow }: FlowCanvasProps) {
+export function FlowCanvas({ flow, aiProvider }: FlowCanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvasInner flow={flow} />
+      <FlowCanvasInner flow={flow} aiProvider={aiProvider} />
     </ReactFlowProvider>
   );
 }

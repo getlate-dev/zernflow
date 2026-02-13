@@ -136,7 +136,7 @@ export interface PrivateReplyNodeData {
 
 export interface AiResponseNodeData {
   label?: string;
-  model: "gpt-4o-mini" | "gpt-4o";
+  model: string;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
