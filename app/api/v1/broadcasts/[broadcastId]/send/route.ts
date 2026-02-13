@@ -147,14 +147,29 @@ export async function POST(
   const recipientIds: string[] = [];
   for (let i = 0; i < recipientRows.length; i += 500) {
     const batch = recipientRows.slice(i, i + 500);
-    const { data: inserted } = await supabase
+    const { data: inserted, error: insertErr } = await supabase
       .from("broadcast_recipients")
       .insert(batch)
       .select("id");
 
+    if (insertErr) {
+      console.error("Failed to insert broadcast recipients:", insertErr);
+      return NextResponse.json(
+        { error: `Failed to create recipients: ${insertErr.message}` },
+        { status: 500 }
+      );
+    }
+
     if (inserted) {
       recipientIds.push(...inserted.map((r) => r.id));
     }
+  }
+
+  if (recipientIds.length === 0) {
+    return NextResponse.json(
+      { error: "Failed to create broadcast recipients" },
+      { status: 500 }
+    );
   }
 
   // Schedule delivery

@@ -33,6 +33,10 @@ export async function scheduleBroadcastDelivery(
   broadcastId: string,
   recipientIds: string[]
 ) {
+  if (recipientIds.length === 0) {
+    throw new Error("No recipients to schedule");
+  }
+
   const jobs = recipientIds.map((recipientId, index) => ({
     type: "send_broadcast",
     payload: { broadcastId, recipientId } as unknown as Json,
@@ -44,7 +48,8 @@ export async function scheduleBroadcastDelivery(
   const batchSize = 100;
   for (let i = 0; i < jobs.length; i += batchSize) {
     const batch = jobs.slice(i, i + batchSize);
-    await supabase.from("scheduled_jobs").insert(batch);
+    const { error } = await supabase.from("scheduled_jobs").insert(batch);
+    if (error) throw new Error(`Failed to schedule jobs: ${error.message}`);
   }
 
   // Update broadcast status
