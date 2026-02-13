@@ -14,6 +14,9 @@ import {
   Github,
   X,
   Check,
+  Sparkles,
+  ListOrdered,
+  Link2,
 } from "lucide-react";
 
 export default function Home() {
@@ -193,8 +196,11 @@ export default function Home() {
                 { feature: "X / Twitter", manychat: false, zernflow: true },
                 { feature: "Bluesky & Reddit", manychat: false, zernflow: true },
                 { feature: "Visual flow builder", manychat: true, zernflow: true },
+                { feature: "AI responses (BYO key)", manychat: true, zernflow: true },
+                { feature: "Choose your AI provider", manychat: false, zernflow: true },
                 { feature: "Comment-to-DM", manychat: true, zernflow: true },
                 { feature: "Live chat inbox", manychat: true, zernflow: true },
+                { feature: "Sequences / drip campaigns", manychat: true, zernflow: true },
                 { feature: "Contact CRM", manychat: true, zernflow: true },
                 { feature: "Open source", manychat: false, zernflow: true },
                 { feature: "Self-hostable", manychat: false, zernflow: true },
@@ -242,6 +248,11 @@ export default function Home() {
                 desc: "Drag-and-drop conversation flows. Welcome messages, follow-ups, sales funnels. No code.",
               },
               {
+                icon: Sparkles,
+                title: "AI responses",
+                desc: "Let AI handle conversations. Pick your provider: OpenAI, Anthropic, or Google. Your API key, your choice.",
+              },
+              {
                 icon: MessageSquare,
                 title: "Live chat inbox",
                 desc: "All your DMs in one place. Bot handles the easy stuff, you jump in when it matters.",
@@ -255,6 +266,16 @@ export default function Home() {
                 icon: Radio,
                 title: "Broadcasts",
                 desc: "Send promotions and updates to your audience. Target by tags, platform, or segments.",
+              },
+              {
+                icon: ListOrdered,
+                title: "Sequences",
+                desc: "Drip campaigns that run on autopilot. Message, wait, message. Enroll contacts from flows.",
+              },
+              {
+                icon: Link2,
+                title: "Growth tools",
+                desc: "Generate DM starter links for every platform. Share them anywhere to start conversations.",
               },
               {
                 icon: Zap,

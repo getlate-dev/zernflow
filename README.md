@@ -16,7 +16,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 ### Features
 
 - **Visual Flow Builder** - Drag-and-drop chatbot builder with 15+ node types
-- **AI Response Node** - GPT-powered replies using OpenAI (gpt-4o-mini / gpt-4o)
+- **AI Response Node** - AI-powered replies via OpenAI, Anthropic, or Google (Vercel AI SDK)
 - **Live Chat Inbox** - Real-time inbox with human takeover and conversation assignment
 - **Contact CRM** - Tags, custom fields, segments, and contact management
 - **Broadcasting** - Send targeted messages to contact segments
@@ -36,7 +36,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
 - A [Late](https://getlate.dev) API key
-- An [OpenAI](https://platform.openai.com) API key (optional, for AI node)
+- An AI provider API key (optional, for AI node): [OpenAI](https://platform.openai.com), [Anthropic](https://console.anthropic.com), or [Google](https://aistudio.google.com)
 
 ### Setup
 
@@ -53,7 +53,7 @@ npm install
 Create a free project at [supabase.com](https://supabase.com). Then run the SQL migrations in the Supabase SQL editor:
 
 ```bash
-# Run each file in supabase/migrations/ in order (00001 through 00006)
+# Run each file in supabase/migrations/ in order (00001 through 00009)
 ```
 
 3. **Configure environment**
@@ -69,8 +69,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 LATE_API_KEY=your-late-api-key
-OPENAI_API_KEY=sk-your-openai-key          # Optional, for AI Response node
-CRON_SECRET=your-cron-secret               # For sequence processor + job scheduler
+AI_API_KEY=your-ai-api-key               # Optional, for AI Response node (OpenAI/Anthropic/Google)
+CRON_SECRET=your-cron-secret              # For sequence processor + job scheduler
 ```
 
 4. **Run**
@@ -95,9 +95,10 @@ Recv.  Engine     Chat           Processor
    |    |    |    |    |    |
    +----+----+----+----+----+
         |         |         |
-    Supabase   Late API   OpenAI
-  (PG + Auth   (6 platforms)
-  + Realtime)
+    Supabase   Late API   AI SDK
+  (PG + Auth   (6 platforms) (OpenAI /
+  + Realtime)              Anthropic /
+                           Google)
 ```
 
 ## Stack
@@ -107,7 +108,7 @@ Recv.  Engine     Chat           Processor
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Database + Auth + Realtime | Supabase |
 | Flow Builder | React Flow (@xyflow/react) |
-| AI | Vercel AI SDK + OpenAI |
+| AI | Vercel AI SDK (OpenAI, Anthropic, Google) |
 | UI | Tailwind CSS 4 |
 | Icons | @icons-pack/react-simple-icons |
 | Messaging | [Late API](https://getlate.dev) |
@@ -118,7 +119,7 @@ Recv.  Engine     Chat           Processor
 |------|-------------|
 | Trigger | Keyword, postback, quick reply, welcome, default |
 | Send Message | Text, images, buttons, quick replies, carousels |
-| AI Response | GPT-powered replies with conversation context |
+| AI Response | AI-powered replies with conversation context (OpenAI, Anthropic, Google) |
 | Condition | If/else on tags, fields, platform, variables |
 | Delay | Wait seconds/minutes/hours/days |
 | Add/Remove Tag | Manage contact tags |
@@ -158,7 +159,7 @@ zernflow/
 │   ├── actions/             # Server actions (team, sequences, workspace)
 │   └── types/               # TypeScript types
 └── supabase/
-    └── migrations/          # SQL schema + RLS policies (00001-00006)
+    └── migrations/          # SQL schema + RLS policies (00001-00009)
 ```
 
 ## Contributing
