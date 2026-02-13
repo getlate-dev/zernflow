@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
+  Check,
+  Copy,
   Plug,
   Plus,
   Power,
@@ -41,6 +43,24 @@ function getPlatformLabel(platform: string): string {
   );
 }
 
+function getDmLink(platform: Platform, username: string | null): { url: string | null; label: string } {
+  const handle = username || "";
+  switch (platform) {
+    case "instagram":
+      return handle ? { url: `https://ig.me/m/${handle}`, label: `ig.me/m/${handle}` } : { url: null, label: "" };
+    case "facebook":
+      return handle ? { url: `https://m.me/${handle}`, label: `m.me/${handle}` } : { url: null, label: "" };
+    case "telegram":
+      return handle ? { url: `https://t.me/${handle}`, label: `t.me/${handle}` } : { url: null, label: "" };
+    case "twitter":
+      return handle ? { url: `https://x.com/${handle}`, label: `x.com/${handle}` } : { url: null, label: "" };
+    case "reddit":
+      return handle ? { url: `https://reddit.com/message/compose/?to=${handle}`, label: `reddit.com/.../to=${handle}` } : { url: null, label: "" };
+    default:
+      return { url: null, label: "" };
+  }
+}
+
 export function ChannelsView({
   channels: initialChannels,
 }: {
@@ -53,6 +73,7 @@ export function ChannelsView({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Close picker on outside click
@@ -332,6 +353,44 @@ export function ChannelsView({
                       })}
                     </span>
                   </div>
+
+                  {(() => {
+                    const dm = getDmLink(channel.platform as Platform, channel.username);
+                    if (!dm.url) return null;
+                    return (
+                      <div className="mt-3 flex items-center gap-1.5">
+                        <a
+                          href={dm.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="min-w-0 flex-1 truncate rounded-md bg-muted px-2.5 py-1 text-[11px] font-mono text-primary hover:underline"
+                          title={dm.url}
+                        >
+                          {dm.label}
+                        </a>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(dm.url!);
+                            setCopiedId(channel.id);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors",
+                            copiedId === channel.id
+                              ? "border-green-200 bg-green-50 text-green-600"
+                              : "border-border bg-card text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
+                          )}
+                          title={copiedId === channel.id ? "Copied!" : "Copy DM link"}
+                        >
+                          {copiedId === channel.id ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
