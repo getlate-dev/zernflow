@@ -100,20 +100,6 @@ async function handleWebhook(request: NextRequest) {
     return NextResponse.json({ error: "Channel not found" }, { status: 404 });
   }
 
-  // Prevent loops: if the sender is one of our own connected accounts
-  // in this workspace, skip to avoid bot-to-bot ping-pong.
-  const { data: senderChannel } = await supabase
-    .from("channels")
-    .select("id")
-    .eq("workspace_id", channel.workspace_id)
-    .eq("username", msg.sender.username || "")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (senderChannel) {
-    return NextResponse.json({ ok: true, skipped: true, reason: "sender_is_own_account" });
-  }
-
   // Verify HMAC-SHA256 signature
   if (channel.webhook_secret) {
     if (!signature) {
