@@ -69,15 +69,13 @@ export async function POST() {
         // Update display info if changed
         if (
           existing.username !== (account.username || null) ||
-          existing.display_name !== (account.displayName || account.username || null) ||
-          existing.profile_picture !== (account.profileUrl || null)
+          existing.display_name !== (account.displayName || account.username || null)
         ) {
           await supabase
             .from("channels")
             .update({
               username: account.username || null,
               display_name: account.displayName || account.username || null,
-              profile_picture: account.profileUrl || null,
             })
             .eq("id", existing.id);
           updated++;
@@ -90,7 +88,7 @@ export async function POST() {
           late_account_id: account._id,
           username: account.username || null,
           display_name: account.displayName || account.username || null,
-          profile_picture: account.profileUrl || null,
+          profile_picture: null,
           is_active: true,
         });
         created++;
