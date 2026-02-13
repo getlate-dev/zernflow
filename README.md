@@ -23,6 +23,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 - **Sequences** - Drip campaigns with timed message series and automatic enrollment
 - **Team Management** - Invite members, assign roles, manage permissions
 - **Multi-Platform** - Instagram, Facebook, Telegram, Twitter/X, Bluesky, Reddit
+- **Connect Channels** - OAuth connection flow directly from ZernFlow (powered by Late)
 - **Rich Messaging** - Buttons, quick replies, and carousel cards
 - **Comment-to-DM** - Automatically DM users who comment specific keywords
 - **Growth Tools** - Conversation starter links for each connected platform
@@ -35,8 +36,8 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [Late](https://getlate.dev) API key
-- AI provider keys configured in [Vercel AI Gateway](https://vercel.com/ai-gateway) (optional, for AI node)
+- A [Late](https://getlate.dev) API key (entered in Settings after setup)
+- A [Vercel AI Gateway](https://vercel.com/ai-gateway) key (optional, for AI node, entered in Settings or env)
 
 ### Setup
 
@@ -62,16 +63,17 @@ Create a free project at [supabase.com](https://supabase.com). Then run the SQL 
 cp .env.example .env
 ```
 
-Fill in your credentials:
+Fill in your Supabase credentials:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-LATE_API_KEY=your-late-api-key
 CRON_SECRET=your-cron-secret              # For sequence processor + job scheduler
 # AI_GATEWAY_API_KEY=...                  # Optional, for self-hosted (Vercel handles this automatically)
 ```
+
+After starting the app, go to **Settings** to enter your Late API key and (optionally) AI Gateway key.
 
 4. **Run**
 
