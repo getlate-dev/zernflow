@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Send, Paperclip, Bot, User, MessageSquare } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Send, Paperclip, Bot, User, MessageSquare, CheckCircle, Clock, RotateCcw, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { PlatformIcon } from "@/components/platform-icon";
-import type { Database } from "@/lib/types/database";
+import type { Database, ConversationStatus } from "@/lib/types/database";
 
 type Message = Database["public"]["Tables"]["messages"]["Row"];
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"] & {
@@ -119,11 +120,38 @@ export function MessageThread({
   conversation: Conversation | null;
   messages: Message[];
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const updateConversationStatus = useCallback(async (status: ConversationStatus) => {
+    if (!conversation || statusUpdating) return;
+    setStatusUpdating(status);
+    try {
+      const { error } = await createClient()
+        .from("conversations")
+        .update({ status })
+        .eq("id", conversation.id);
+      if (error) throw error;
+      router.refresh();
+    } catch {
+      alert(`Failed to update conversation status`);
+    } finally {
+      setStatusUpdating(null);
+    }
+  }, [conversation, statusUpdating, router]);
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
+  }, []);
 
   useEffect(() => {
     setMessages(initialMessages);
@@ -314,6 +342,41 @@ export function MessageThread({
               Bot paused
             </span>
           )}
+          <div className="flex items-center gap-1">
+            {conversation.status !== "closed" && (
+              <button
+                onClick={() => updateConversationStatus("closed")}
+                disabled={!!statusUpdating}
+                title="Close conversation"
+                aria-label="Close conversation"
+                className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                {statusUpdating === "closed" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {conversation.status !== "snoozed" && (
+              <button
+                onClick={() => updateConversationStatus("snoozed")}
+                disabled={!!statusUpdating}
+                title="Snooze conversation"
+                aria-label="Snooze conversation"
+                className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                {statusUpdating === "snoozed" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5" />}
+              </button>
+            )}
+            {conversation.status !== "open" && (
+              <button
+                onClick={() => updateConversationStatus("open")}
+                disabled={!!statusUpdating}
+                title="Reopen conversation"
+                aria-label="Reopen conversation"
+                className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                {statusUpdating === "open" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -343,8 +406,12 @@ export function MessageThread({
         <div className="mx-auto flex max-w-2xl items-end gap-2">
           <div className="flex-1">
             <textarea
+              ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                autoResize();
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -354,11 +421,13 @@ export function MessageThread({
               placeholder="Type a message..."
               rows={1}
               className="w-full resize-none rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              style={{ maxHeight: 150 }}
             />
           </div>
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
+            aria-label="Send message"
             className={cn(
               "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
               input.trim() && !sending

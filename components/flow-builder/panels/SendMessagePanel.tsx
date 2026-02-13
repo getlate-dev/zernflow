@@ -47,7 +47,7 @@ interface SendMessagePanelProps {
 
 function VariableHint() {
   return (
-    <p className="text-[11px] text-gray-400">
+    <p className="text-[11px] text-muted-foreground/60">
       Use {"{{variable}}"} for dynamic content
     </p>
   );
@@ -93,22 +93,22 @@ export function SendMessagePanel({ data: rawData, onChange }: SendMessagePanelPr
       <button
         type="button"
         onClick={addMessage}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm font-medium text-gray-500 transition-colors hover:border-blue-400 hover:text-blue-500"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-blue-400 hover:text-blue-500"
       >
         <Plus className="h-4 w-4" />
         Add Message
       </button>
 
       {messages.length === 0 && (
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-muted-foreground">
           Add at least one message to send.
         </p>
       )}
 
       {/* Platform hints */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <p className="text-xs font-medium text-gray-600">Platform notes</p>
-        <ul className="mt-1.5 space-y-1 text-[11px] text-gray-500">
+      <div className="rounded-lg border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">Platform notes</p>
+        <ul className="mt-1.5 space-y-1 text-[11px] text-muted-foreground">
           <li>Facebook/Instagram: Max 3 buttons per message</li>
           <li>Telegram: Buttons appear as inline keyboards</li>
           <li>Quick replies disappear after user responds</li>
@@ -196,12 +196,12 @@ function MessageEditor({
   );
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
+    <div className="rounded-lg border border-border bg-card">
       {/* Message header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <div className="flex items-center gap-2">
-          <GripVertical className="h-3.5 w-3.5 text-gray-300" />
-          <span className="text-xs font-semibold text-gray-600">
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60" />
+          <span className="text-xs font-semibold text-muted-foreground">
             Message {index + 1}
           </span>
         </div>
@@ -209,7 +209,7 @@ function MessageEditor({
           <button
             type="button"
             onClick={onRemove}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -217,7 +217,7 @@ function MessageEditor({
       </div>
 
       {/* Mode toggle */}
-      <div className="flex border-b border-gray-100">
+      <div className="flex border-b border-border">
         <button
           type="button"
           onClick={() => isCarouselMode && toggleMode()}
@@ -225,7 +225,7 @@ function MessageEditor({
             "flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors",
             !isCarouselMode
               ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-400 hover:text-gray-600"
+              : "text-muted-foreground/60 hover:text-muted-foreground"
           )}
         >
           <Type className="h-3 w-3" />
@@ -238,7 +238,7 @@ function MessageEditor({
             "flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors",
             isCarouselMode
               ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-400 hover:text-gray-600"
+              : "text-muted-foreground/60 hover:text-muted-foreground"
           )}
         >
           <LayoutGrid className="h-3 w-3" />
@@ -257,15 +257,15 @@ function MessageEditor({
             {/* Text */}
             <div>
               <div className="mb-1.5 flex items-center gap-1.5">
-                <Type className="h-3 w-3 text-gray-400" />
-                <label className="text-xs font-medium text-gray-600">Text</label>
+                <Type className="h-3 w-3 text-muted-foreground/60" />
+                <label className="text-xs font-medium text-muted-foreground">Text</label>
               </div>
               <textarea
                 value={message.text || ""}
                 onChange={(e) => onChange({ ...message, text: e.target.value })}
                 placeholder="Type your message... Use {{name}} for variables"
                 rows={3}
-                className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <VariableHint />
             </div>
@@ -273,8 +273,8 @@ function MessageEditor({
             {/* Image URL */}
             <div>
               <div className="mb-1.5 flex items-center gap-1.5">
-                <Image className="h-3 w-3 text-gray-400" />
-                <label className="text-xs font-medium text-gray-600">Image URL</label>
+                <Image className="h-3 w-3 text-muted-foreground/60" />
+                <label className="text-xs font-medium text-muted-foreground">Image URL</label>
               </div>
               <input
                 type="url"
@@ -283,7 +283,7 @@ function MessageEditor({
                   onChange({ ...message, imageUrl: e.target.value || undefined })
                 }
                 placeholder="https://example.com/image.png"
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -291,8 +291,8 @@ function MessageEditor({
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <MessageCircle className="h-3 w-3 text-gray-400" />
-                  <label className="text-xs font-medium text-gray-600">
+                  <MessageCircle className="h-3 w-3 text-muted-foreground/60" />
+                  <label className="text-xs font-medium text-muted-foreground">
                     Quick Replies
                   </label>
                 </div>
@@ -312,19 +312,19 @@ function MessageEditor({
                     value={qr.title}
                     onChange={(e) => updateQuickReply(i, { ...qr, title: e.target.value })}
                     placeholder="Label"
-                    className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <input
                     type="text"
                     value={qr.payload}
                     onChange={(e) => updateQuickReply(i, { ...qr, payload: e.target.value })}
                     placeholder="Payload"
-                    className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => removeQuickReply(i)}
-                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -336,8 +336,8 @@ function MessageEditor({
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <MousePointer className="h-3 w-3 text-gray-400" />
-                  <label className="text-xs font-medium text-gray-600">
+                  <MousePointer className="h-3 w-3 text-muted-foreground/60" />
+                  <label className="text-xs font-medium text-muted-foreground">
                     Buttons
                   </label>
                 </div>
@@ -353,7 +353,7 @@ function MessageEditor({
               {(message.buttons || []).map((btn, i) => (
                 <div
                   key={i}
-                  className="mb-2 rounded-lg border border-gray-100 bg-gray-50 p-2.5"
+                  className="mb-2 rounded-lg border border-border bg-muted p-2.5"
                 >
                   <div className="mb-2 flex items-center gap-2">
                     <input
@@ -361,12 +361,12 @@ function MessageEditor({
                       value={btn.title}
                       onChange={(e) => updateButton(i, { ...btn, title: e.target.value })}
                       placeholder="Button label"
-                      className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     <button
                       type="button"
                       onClick={() => removeButton(i)}
-                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                      className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -383,7 +383,7 @@ function MessageEditor({
                           url: type === "url" ? btn.url || "" : undefined,
                         });
                       }}
-                      className="rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
                       <option value="postback">Postback</option>
                       <option value="url">URL</option>
@@ -394,7 +394,7 @@ function MessageEditor({
                         value={btn.payload || ""}
                         onChange={(e) => updateButton(i, { ...btn, payload: e.target.value })}
                         placeholder="Payload value"
-                        className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     ) : (
                       <input
@@ -402,7 +402,7 @@ function MessageEditor({
                         value={btn.url || ""}
                         onChange={(e) => updateButton(i, { ...btn, url: e.target.value })}
                         placeholder="https://..."
-                        className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     )}
                   </div>
@@ -451,8 +451,8 @@ function CarouselEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <LayoutGrid className="h-3 w-3 text-gray-400" />
-          <label className="text-xs font-medium text-gray-600">
+          <LayoutGrid className="h-3 w-3 text-muted-foreground/60" />
+          <label className="text-xs font-medium text-muted-foreground">
             Cards ({elements.length})
           </label>
         </div>
@@ -478,7 +478,7 @@ function CarouselEditor({
       ))}
 
       {elements.length === 0 && (
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-muted-foreground">
           Add at least one card to the carousel.
         </p>
       )}
@@ -527,17 +527,17 @@ function CarouselCardEditor({
   );
 
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
+    <div className="rounded-lg border border-border bg-muted p-2.5">
       {/* Card header */}
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-gray-500">
+        <span className="text-[11px] font-semibold text-muted-foreground">
           Card {index + 1}
         </span>
         {canRemove && (
           <button
             type="button"
             onClick={onRemove}
-            className="rounded p-0.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+            className="rounded p-0.5 text-muted-foreground/60 hover:bg-accent hover:text-muted-foreground"
           >
             <X className="h-3 w-3" />
           </button>
@@ -548,8 +548,8 @@ function CarouselCardEditor({
         {/* Image URL */}
         <div>
           <div className="mb-1 flex items-center gap-1">
-            <Image className="h-2.5 w-2.5 text-gray-400" />
-            <label className="text-[11px] font-medium text-gray-500">Image URL</label>
+            <Image className="h-2.5 w-2.5 text-muted-foreground/60" />
+            <label className="text-[11px] font-medium text-muted-foreground">Image URL</label>
           </div>
           <input
             type="url"
@@ -558,13 +558,13 @@ function CarouselCardEditor({
               onChange({ ...element, imageUrl: e.target.value || undefined })
             }
             placeholder="https://example.com/image.png"
-            className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
         {/* Title */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-gray-500">
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
             Title
           </label>
           <input
@@ -573,13 +573,13 @@ function CarouselCardEditor({
             onChange={(e) => onChange({ ...element, title: e.target.value })}
             placeholder="Card title (max 80 chars)"
             maxLength={80}
-            className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
         {/* Subtitle */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-gray-500">
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
             Subtitle
           </label>
           <input
@@ -589,7 +589,7 @@ function CarouselCardEditor({
               onChange({ ...element, subtitle: e.target.value || undefined })
             }
             placeholder="Card subtitle"
-            className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
@@ -597,8 +597,8 @@ function CarouselCardEditor({
         <div>
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <MousePointer className="h-2.5 w-2.5 text-gray-400" />
-              <label className="text-[11px] font-medium text-gray-500">
+              <MousePointer className="h-2.5 w-2.5 text-muted-foreground/60" />
+              <label className="text-[11px] font-medium text-muted-foreground">
                 Buttons ({buttons.length}/3)
               </label>
             </div>
@@ -616,7 +616,7 @@ function CarouselCardEditor({
           {buttons.map((btn, i) => (
             <div
               key={i}
-              className="mb-1.5 rounded border border-gray-200 bg-white p-2"
+              className="mb-1.5 rounded border border-border bg-card p-2"
             >
               <div className="mb-1.5 flex items-center gap-1.5">
                 <input
@@ -626,12 +626,12 @@ function CarouselCardEditor({
                     updateButton(i, { ...btn, title: e.target.value })
                   }
                   placeholder="Button label"
-                  className="flex-1 rounded border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 rounded border border-border bg-card px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <button
                   type="button"
                   onClick={() => removeButton(i)}
-                  className="rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  className="rounded p-0.5 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                 >
                   <X className="h-2.5 w-2.5" />
                 </button>
@@ -649,7 +649,7 @@ function CarouselCardEditor({
                       url: type === "url" ? btn.url || "" : undefined,
                     });
                   }}
-                  className="rounded border border-gray-200 bg-white px-1.5 py-1 text-[11px] text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="rounded border border-border bg-card px-1.5 py-1 text-[11px] text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="postback">Postback</option>
                   <option value="url">URL</option>
@@ -662,7 +662,7 @@ function CarouselCardEditor({
                       updateButton(i, { ...btn, payload: e.target.value })
                     }
                     placeholder="Payload value"
-                    className="flex-1 rounded border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 rounded border border-border bg-card px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 ) : (
                   <input
@@ -672,7 +672,7 @@ function CarouselCardEditor({
                       updateButton(i, { ...btn, url: e.target.value })
                     }
                     placeholder="https://..."
-                    className="flex-1 rounded border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 rounded border border-border bg-card px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 )}
               </div>

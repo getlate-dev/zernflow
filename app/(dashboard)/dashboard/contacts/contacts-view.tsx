@@ -233,9 +233,10 @@ export function ContactsView({
                       >
                         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
                           {contact.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={contact.avatar_url}
-                              alt=""
+                              alt={contact.display_name || "Contact"}
                               className="h-8 w-8 rounded-full object-cover"
                             />
                           ) : (

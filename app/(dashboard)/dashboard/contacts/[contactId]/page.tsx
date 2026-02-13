@@ -78,9 +78,10 @@ export default async function ContactDetailPage({
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-muted text-lg font-semibold">
             {contact.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={contact.avatar_url}
-                alt=""
+                alt={contact.display_name || "Contact"}
                 className="h-12 w-12 rounded-full object-cover"
               />
             ) : (

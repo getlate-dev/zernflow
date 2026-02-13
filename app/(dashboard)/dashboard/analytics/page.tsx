@@ -64,10 +64,9 @@ export default async function AnalyticsPage() {
       .select("id, name")
       .eq("workspace_id", workspace.id),
     supabase
-      .from("analytics_events")
+      .from("contacts")
       .select("created_at")
       .eq("workspace_id", workspace.id)
-      .eq("event_type", "contact_created")
       .gte("created_at", thirtyDaysAgo)
       .lte("created_at", now)
       .order("created_at"),

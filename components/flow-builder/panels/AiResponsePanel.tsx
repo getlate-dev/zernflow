@@ -29,7 +29,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
     <div className="space-y-4">
       {/* System Prompt */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           System Prompt
         </label>
         <textarea
@@ -37,16 +37,16 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, systemPrompt: e.target.value })}
           placeholder="You are a helpful customer support agent..."
           rows={8}
-          className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <p className="mt-1 text-[11px] text-gray-400">
+        <p className="mt-1 text-[11px] text-muted-foreground/60">
           Instructions for how the AI should behave and respond.
         </p>
       </div>
 
       {/* Model */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           Model
         </label>
         <input
@@ -54,7 +54,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           value={currentModel}
           onChange={(e) => onChange({ ...data, model: e.target.value })}
           placeholder="provider/model (e.g. openai/gpt-4o-mini)"
-          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono text-gray-900 dark:text-white placeholder:text-gray-400 placeholder:font-sans focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground/60 placeholder:font-sans focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {POPULAR_MODELS.map((m) => (
@@ -65,20 +65,20 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
               className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
                 currentModel === m.id
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                  : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500"
+                  : "border-border text-muted-foreground hover:border-input"
               }`}
             >
               {m.label}
             </button>
           ))}
         </div>
-        <p className="mt-1.5 text-[11px] text-gray-400">
+        <p className="mt-1.5 text-[11px] text-muted-foreground/60">
           Any model supported by{" "}
           <a
             href="https://vercel.com/ai-gateway"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-gray-600"
+            className="underline hover:text-muted-foreground"
           >
             Vercel AI Gateway
           </a>
@@ -89,8 +89,8 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
       {/* Temperature */}
       <div>
         <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Temperature</label>
-          <span className="text-xs text-gray-500">{data.temperature ?? 0.7}</span>
+          <label className="text-xs font-medium text-muted-foreground">Temperature</label>
+          <span className="text-xs text-muted-foreground">{data.temperature ?? 0.7}</span>
         </div>
         <input
           type="range"
@@ -101,7 +101,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, temperature: parseFloat(e.target.value) })}
           className="w-full"
         />
-        <div className="mt-1 flex justify-between text-[11px] text-gray-400">
+        <div className="mt-1 flex justify-between text-[11px] text-muted-foreground/60">
           <span>Precise</span>
           <span>Creative</span>
         </div>
@@ -109,7 +109,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
 
       {/* Max Tokens */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           Max Tokens
         </label>
         <input
@@ -118,16 +118,16 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, maxTokens: parseInt(e.target.value) || 500 })}
           min={1}
           max={4096}
-          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <p className="mt-1 text-[11px] text-gray-400">
+        <p className="mt-1 text-[11px] text-muted-foreground/60">
           Maximum length of the AI response.
         </p>
       </div>
 
       {/* Context Messages */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+        <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
           Context Messages
         </label>
         <input
@@ -136,9 +136,9 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, contextMessages: parseInt(e.target.value) || 10 })}
           min={1}
           max={50}
-          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <p className="mt-1 text-[11px] text-gray-400">
+        <p className="mt-1 text-[11px] text-muted-foreground/60">
           How many past messages to include as context for the AI.
         </p>
       </div>

@@ -64,18 +64,18 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
     <div className="space-y-5">
       {/* Mode Toggle */}
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Delay Type
         </label>
-        <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+        <div className="flex rounded-lg border border-border bg-muted p-1">
           <button
             type="button"
             onClick={() => handleModeChange("duration")}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               mode === "duration"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             Wait for duration
@@ -86,8 +86,8 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
               mode === "until"
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             Wait until
@@ -99,7 +99,7 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
         <>
           {/* Duration Input */}
           <div>
-            <label className="mb-2 block text-xs font-semibold text-gray-700">
+            <label className="mb-2 block text-xs font-semibold text-foreground">
               Duration
             </label>
             <div className="flex gap-2">
@@ -110,14 +110,14 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
                 onChange={(e) =>
                   onChange({ ...data, duration: Math.max(0, parseInt(e.target.value) || 0), waitUntil: undefined })
                 }
-                className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="w-24 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               />
               <select
                 value={unit}
                 onChange={(e) =>
                   onChange({ ...data, unit: e.target.value as DelayUnit, waitUntil: undefined })
                 }
-                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               >
                 {unitOptions.map((u) => (
                   <option key={u.value} value={u.value}>
@@ -130,7 +130,7 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
 
           {/* Presets */}
           <div>
-            <label className="mb-2 block text-xs font-semibold text-gray-700">
+            <label className="mb-2 block text-xs font-semibold text-foreground">
               Quick presets
             </label>
             <div className="flex flex-wrap gap-2">
@@ -145,7 +145,7 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
                       "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                       isActive
                         ? "bg-purple-500 text-white"
-                        : "border border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:text-purple-600"
+                        : "border border-border bg-card text-muted-foreground hover:border-purple-300 hover:text-purple-600"
                     )}
                   >
                     {preset.label}
@@ -158,25 +158,25 @@ export function DelayPanel({ data: rawData, onChange }: DelayPanelProps) {
       ) : (
         /* Wait Until */
         <div>
-          <label className="mb-2 block text-xs font-semibold text-gray-700">
+          <label className="mb-2 block text-xs font-semibold text-foreground">
             Wait until date/time
           </label>
           <input
             type="datetime-local"
             value={data.waitUntil || ""}
             onChange={(e) => onChange({ ...data, waitUntil: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
           />
-          <p className="mt-1.5 text-xs text-gray-500">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             The flow will pause until this specific date and time.
           </p>
         </div>
       )}
 
       {/* Summary */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <p className="text-xs font-medium text-gray-600">Preview</p>
-        <p className="mt-1 text-sm text-gray-900">
+      <div className="rounded-lg border border-border bg-muted p-3">
+        <p className="text-xs font-medium text-muted-foreground">Preview</p>
+        <p className="mt-1 text-sm text-foreground">
           {mode === "duration"
             ? duration > 0
               ? `Wait ${duration} ${unit} before continuing`

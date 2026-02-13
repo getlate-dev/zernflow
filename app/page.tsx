@@ -18,6 +18,7 @@ import {
   ListOrdered,
   Link2,
 } from "lucide-react";
+import { PlatformIcon } from "@/components/platform-icon";
 
 export default function Home() {
   return (
@@ -159,8 +160,18 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6">
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-gray-400">Works with 6 platforms (ManyChat only supports 2)</p>
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            {["Instagram", "Facebook", "Telegram", "X / Twitter", "Bluesky", "Reddit"].map((p) => (
-              <span key={p} className="text-sm font-medium text-gray-500">{p}</span>
+            {[
+              { name: "Instagram", platform: "instagram" },
+              { name: "Facebook", platform: "facebook" },
+              { name: "Telegram", platform: "telegram" },
+              { name: "X / Twitter", platform: "twitter" },
+              { name: "Bluesky", platform: "bluesky" },
+              { name: "Reddit", platform: "reddit" },
+            ].map((p) => (
+              <span key={p.platform} className="inline-flex items-center gap-2 text-sm font-medium text-gray-500">
+                <PlatformIcon platform={p.platform} size={18} />
+                {p.name}
+              </span>
             ))}
           </div>
         </div>

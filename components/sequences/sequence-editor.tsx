@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { updateSequence, deleteSequence } from "@/lib/actions/sequences";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import type { SequenceStep } from "@/lib/types/database";
 
 interface SequenceEditorProps {
@@ -51,6 +52,7 @@ export function SequenceEditor({ sequence }: SequenceEditorProps) {
   const [status, setStatus] = useState(sequence.status);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -78,7 +80,6 @@ export function SequenceEditor({ sequence }: SequenceEditorProps) {
   }, [sequence.id, name, description, steps, status]);
 
   const handleDelete = useCallback(async () => {
-    if (!confirm("Are you sure you want to delete this sequence?")) return;
     setDeleting(true);
     const result = await deleteSequence(sequence.id);
     if (result.error) {
@@ -184,13 +185,25 @@ export function SequenceEditor({ sequence }: SequenceEditorProps) {
               {saving ? "Saving..." : "Save"}
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => setConfirmDelete(true)}
               disabled={deleting}
               className="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               title="Delete sequence"
             >
               <Trash2 className="h-4 w-4" />
             </button>
+            <ConfirmDialog
+              open={confirmDelete}
+              title="Delete sequence"
+              message="Are you sure you want to delete this sequence? This action cannot be undone."
+              confirmLabel="Delete"
+              destructive
+              onConfirm={() => {
+                setConfirmDelete(false);
+                handleDelete();
+              }}
+              onCancel={() => setConfirmDelete(false)}
+            />
           </div>
         </div>
       </div>

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { User } from "lucide-react";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import { MessageThread } from "@/components/inbox/message-thread";
 import { ContactPanel } from "@/components/inbox/contact-panel";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/lib/types/database";
 
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"] & {
@@ -82,17 +84,32 @@ export function InboxView({
       </div>
 
       {/* Center panel: Message thread */}
-      <div className="flex-1">
-        {loadingMessages && selected ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Toggle contact panel button */}
+        {selected && !showContactPanel && (
+          <div className="flex shrink-0 justify-end border-b border-border px-2 py-1">
+            <button
+              onClick={() => setShowContactPanel(true)}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              aria-label="Show contact info"
+            >
+              <User className="h-3.5 w-3.5" />
+              Contact info
+            </button>
           </div>
-        ) : (
-          <MessageThread
-            conversation={selected}
-            messages={messages}
-          />
         )}
+        <div className="min-h-0 flex-1">
+          {loadingMessages && selected ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+            </div>
+          ) : (
+            <MessageThread
+              conversation={selected}
+              messages={messages}
+            />
+          )}
+        </div>
       </div>
 
       {/* Right panel: Contact info */}

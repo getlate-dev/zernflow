@@ -35,34 +35,34 @@ export function EnrollSequencePanel({ data, onChange }: EnrollSequencePanelProps
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <p className="text-sm font-medium text-foreground">
           Enroll in Sequence
         </p>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-muted-foreground">
           The contact will be enrolled in the selected drip sequence when they
           reach this step.
         </p>
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+        <label className="mb-2 block text-xs font-semibold text-muted-foreground">
           Sequence
         </label>
         {loading ? (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Loading sequences...
           </div>
         ) : sequences.length === 0 ? (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground">
             No sequences found. Create one in the Sequences section first.
           </p>
         ) : (
           <select
             value={(data.sequenceId as string) || ""}
             onChange={(e) => onChange({ ...data, sequenceId: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Select a sequence...</option>
             {sequences.map((seq) => (
@@ -72,7 +72,7 @@ export function EnrollSequencePanel({ data, onChange }: EnrollSequencePanelProps
             ))}
           </select>
         )}
-        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Only active sequences will actually enroll contacts at runtime.
         </p>
       </div>

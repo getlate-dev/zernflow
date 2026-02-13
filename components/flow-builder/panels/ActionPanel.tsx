@@ -65,7 +65,7 @@ export function ActionPanel({ data: rawData, onChange }: ActionPanelProps) {
       return <EnrollSequencePanel data={rawData} onChange={onChange} />;
     default:
       return (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           No configuration available for this action type.
         </p>
       );
@@ -79,7 +79,7 @@ function TagConfig({ data, onChange }: ActionSubPanelProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Tag Name
         </label>
         <input
@@ -87,9 +87,9 @@ function TagConfig({ data, onChange }: ActionSubPanelProps) {
           value={data.tagName || ""}
           onChange={(e) => onChange({ ...data, tagName: e.target.value })}
           placeholder="Enter tag name..."
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           {isAdd
             ? "This tag will be added to the contact when they reach this step."
             : "This tag will be removed from the contact when they reach this step."}
@@ -104,7 +104,7 @@ function SetFieldConfig({ data, onChange }: ActionSubPanelProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Field Name (slug)
         </label>
         <input
@@ -112,11 +112,11 @@ function SetFieldConfig({ data, onChange }: ActionSubPanelProps) {
           value={data.fieldSlug || ""}
           onChange={(e) => onChange({ ...data, fieldSlug: e.target.value })}
           placeholder="e.g. favorite_color"
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
       </div>
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Value
         </label>
         <input
@@ -124,9 +124,9 @@ function SetFieldConfig({ data, onChange }: ActionSubPanelProps) {
           value={data.value || ""}
           onChange={(e) => onChange({ ...data, value: e.target.value })}
           placeholder="Value or {{variable}}"
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <p className="mt-1.5 text-[11px] text-gray-400">
+        <p className="mt-1.5 text-[11px] text-muted-foreground/60">
           Use {"{{variable}}"} for dynamic values
         </p>
       </div>
@@ -174,14 +174,14 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
     <div className="space-y-4">
       {/* Method + URL */}
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Request
         </label>
         <div className="flex gap-2">
           <select
             value={data.method || "GET"}
             onChange={(e) => onChange({ ...data, method: e.target.value })}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="GET">GET</option>
             <option value="POST">POST</option>
@@ -193,7 +193,7 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
             value={data.url || ""}
             onChange={(e) => onChange({ ...data, url: e.target.value })}
             placeholder="https://api.example.com/webhook"
-            className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
       </div>
@@ -201,11 +201,11 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
       {/* Headers */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-xs font-semibold text-gray-700">Headers</label>
+          <label className="text-xs font-semibold text-foreground">Headers</label>
           <button
             type="button"
             onClick={addHeader}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-gray-500 hover:bg-gray-100"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted"
           >
             <Plus className="h-3 w-3" />
             Add
@@ -218,19 +218,19 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
               value={key}
               onChange={(e) => updateHeaderKey(key, e.target.value)}
               placeholder="Key"
-              className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
             <input
               type="text"
               value={value}
               onChange={(e) => updateHeaderValue(key, e.target.value)}
               placeholder="Value"
-              className="flex-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              className="flex-1 rounded border border-border bg-card px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
             <button
               type="button"
               onClick={() => removeHeader(key)}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
             >
               <X className="h-3 w-3" />
             </button>
@@ -241,7 +241,7 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
       {/* Body */}
       {(data.method === "POST" || data.method === "PUT") && (
         <div>
-          <label className="mb-2 block text-xs font-semibold text-gray-700">
+          <label className="mb-2 block text-xs font-semibold text-foreground">
             Request Body (JSON)
           </label>
           <textarea
@@ -249,14 +249,14 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
             onChange={(e) => onChange({ ...data, body: e.target.value })}
             placeholder='{"key": "{{variable}}"}'
             rows={4}
-            className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
       )}
 
       {/* Response Variable */}
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Save response to variable
         </label>
         <input
@@ -264,9 +264,9 @@ function HttpRequestConfig({ data, onChange }: ActionSubPanelProps) {
           value={data.responseVariable || ""}
           onChange={(e) => onChange({ ...data, responseVariable: e.target.value })}
           placeholder="e.g. api_response"
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           Optional. Store the response body in a variable for later use.
         </p>
       </div>
@@ -279,7 +279,7 @@ function GoToFlowConfig({ data, onChange }: ActionSubPanelProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Target Flow ID
         </label>
         <input
@@ -287,9 +287,9 @@ function GoToFlowConfig({ data, onChange }: ActionSubPanelProps) {
           value={data.flowId || ""}
           onChange={(e) => onChange({ ...data, flowId: e.target.value })}
           placeholder="Enter flow ID..."
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           The contact will be redirected to this flow.
         </p>
       </div>
@@ -302,11 +302,11 @@ function GoToFlowConfig({ data, onChange }: ActionSubPanelProps) {
             onChange={(e) => onChange({ ...data, returnAfter: e.target.checked })}
             className="peer sr-only"
           />
-          <div className="peer h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-gray-500 peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-gray-300" />
+          <div className="peer h-5 w-9 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-card after:transition-all peer-checked:bg-muted0 peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring" />
         </label>
         <div>
-          <p className="text-sm font-medium text-gray-900">Return after</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-medium text-foreground">Return after</p>
+          <p className="text-xs text-muted-foreground">
             Come back to this flow after the target flow completes
           </p>
         </div>
@@ -321,11 +321,11 @@ function SubscribeConfig({ data, onChange }: ActionSubPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm font-medium text-gray-900">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <p className="text-sm font-medium text-foreground">
           {isSubscribe ? "Subscribe Contact" : "Unsubscribe Contact"}
         </p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           {isSubscribe
             ? "This will mark the contact as subscribed. They will receive broadcasts and automated messages."
             : "This will mark the contact as unsubscribed. They will stop receiving broadcasts and most automated messages."}
@@ -340,11 +340,11 @@ function SubscribeConfig({ data, onChange }: ActionSubPanelProps) {
             onChange={(e) => onChange({ ...data, confirmed: e.target.checked })}
             className="peer sr-only"
           />
-          <div className="peer h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-gray-500 peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-gray-300" />
+          <div className="peer h-5 w-9 rounded-full bg-muted after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-card after:transition-all peer-checked:bg-muted0 peer-checked:after:translate-x-full peer-focus:ring-2 peer-focus:ring-ring" />
         </label>
         <div>
-          <p className="text-sm font-medium text-gray-900">I confirm this action</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-medium text-foreground">I confirm this action</p>
+          <p className="text-xs text-muted-foreground">
             This action will affect the contact's subscription status
           </p>
         </div>
@@ -357,15 +357,15 @@ function SubscribeConfig({ data, onChange }: ActionSubPanelProps) {
 function HumanTakeoverConfig({ data, onChange }: ActionSubPanelProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm font-medium text-gray-900">Hand off to a human agent</p>
-        <p className="mt-1 text-xs text-gray-500">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <p className="text-sm font-medium text-foreground">Hand off to a human agent</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           The flow will pause and the conversation will be marked for human takeover. Automation will stop until an agent resumes it.
         </p>
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Internal note (optional)
         </label>
         <textarea
@@ -373,9 +373,9 @@ function HumanTakeoverConfig({ data, onChange }: ActionSubPanelProps) {
           onChange={(e) => onChange({ ...data, message: e.target.value })}
           placeholder="Add context for the agent..."
           rows={3}
-          className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
         />
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           This message will be visible to agents as an internal note.
         </p>
       </div>
@@ -428,18 +428,18 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
       {/* Distribution bar */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-xs font-semibold text-gray-700">
+          <label className="text-xs font-semibold text-foreground">
             Traffic Distribution
           </label>
           <button
             type="button"
             onClick={distributeEvenly}
-            className="text-[11px] font-medium text-gray-500 hover:text-gray-700"
+            className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
           >
             Distribute evenly
           </button>
         </div>
-        <div className="flex h-3 overflow-hidden rounded-full bg-gray-100">
+        <div className="flex h-3 overflow-hidden rounded-full bg-muted">
           {paths.map((path, i) => {
             const colors = [
               "bg-blue-500",
@@ -478,7 +478,7 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
             <div
               key={index}
               className={cn(
-                "flex items-center gap-2 rounded-lg border border-gray-200 border-l-4 bg-white p-3",
+                "flex items-center gap-2 rounded-lg border border-border border-l-4 bg-card p-3",
                 colors[index % colors.length]
               )}
             >
@@ -486,7 +486,7 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
                 type="text"
                 value={path.name}
                 onChange={(e) => updatePath(index, { ...path, name: e.target.value })}
-                className="w-16 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                className="w-16 rounded border border-border bg-muted px-2 py-1.5 text-xs font-medium text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
               />
               <input
                 type="range"
@@ -496,16 +496,16 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
                 onChange={(e) =>
                   updatePath(index, { ...path, weight: parseInt(e.target.value) })
                 }
-                className="flex-1 accent-gray-500"
+                className="flex-1 accent-muted-foreground"
               />
-              <span className="w-10 text-right text-xs font-semibold text-gray-700">
+              <span className="w-10 text-right text-xs font-semibold text-foreground">
                 {path.weight}%
               </span>
               {paths.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removePath(index)}
-                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -519,7 +519,7 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
         <button
           type="button"
           onClick={addPath}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-2 text-xs font-medium text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-muted-foreground hover:text-muted-foreground"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Path
@@ -533,15 +533,15 @@ function ABSplitConfig({ data, onChange }: ActionSubPanelProps) {
 function SmartDelayConfig({ data, onChange }: ActionSubPanelProps) {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm font-medium text-gray-900">Smart Delay</p>
-        <p className="mt-1 text-xs text-gray-500">
+      <div className="rounded-lg border border-border bg-muted p-4">
+        <p className="text-sm font-medium text-foreground">Smart Delay</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           Pause the flow and wait for a user response. If no response is received within the timeout, continue to the next step.
         </p>
       </div>
 
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Timeout
         </label>
         <div className="flex gap-2">
@@ -552,19 +552,19 @@ function SmartDelayConfig({ data, onChange }: ActionSubPanelProps) {
             onChange={(e) =>
               onChange({ ...data, timeout: Math.max(1, parseInt(e.target.value) || 1) })
             }
-            className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="w-24 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <select
             value={data.timeoutUnit || "minutes"}
             onChange={(e) => onChange({ ...data, timeoutUnit: e.target.value })}
-            className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="minutes">Minutes</option>
             <option value="hours">Hours</option>
             <option value="days">Days</option>
           </select>
         </div>
-        <p className="mt-1.5 text-xs text-gray-500">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           If the user does not respond within this time, the flow will continue.
         </p>
       </div>

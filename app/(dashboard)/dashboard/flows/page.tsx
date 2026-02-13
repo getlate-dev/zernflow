@@ -13,12 +13,12 @@ const statusConfig: Record<FlowStatus, { label: string; classes: string }> = {
   published: {
     label: "Published",
     classes:
-      "bg-emerald-100 text-emerald-800",
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
   },
   archived: {
     label: "Archived",
     classes:
-      "bg-amber-100 text-amber-800",
+      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
   },
 };
 
@@ -49,26 +49,29 @@ export default async function FlowsPage() {
   ]);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Flows</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Build automated chatbot flows for your channels
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/flows/templates"
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <Sparkles className="h-4 w-4" />
-            Templates
-          </Link>
-          <CreateFlowButton />
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border px-8 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Flows</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Build automated chatbot flows for your channels
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/flows/templates"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Sparkles className="h-4 w-4" />
+              Templates
+            </Link>
+            <CreateFlowButton />
+          </div>
         </div>
       </div>
 
+      <div className="flex-1 overflow-auto px-8 py-6">
       {(channelCount ?? 0) === 0 && (
         <div className="mt-6 flex items-center gap-4 rounded-xl border border-dashed border-border bg-card p-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -101,7 +104,7 @@ export default async function FlowsPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {flows.map((flow) => {
             const status = statusConfig[flow.status as FlowStatus] ?? statusConfig.draft;
             const nodeCount = Array.isArray(flow.nodes) ? flow.nodes.length : 0;
@@ -112,25 +115,25 @@ export default async function FlowsPage() {
                 href={`/dashboard/flows/${flow.id}`}
                 className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/50"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                      <GitBranch className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <GitBranch className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
                       <h3 className="font-medium group-hover:text-primary transition-colors">
                         {flow.name}
                       </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {nodeCount} {nodeCount === 1 ? "node" : "nodes"}
-                      </p>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${status.classes}`}
+                      >
+                        {status.label}
+                      </span>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      {nodeCount} {nodeCount === 1 ? "node" : "nodes"}
+                    </p>
                   </div>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${status.classes}`}
-                  >
-                    {status.label}
-                  </span>
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
                   Updated {formatDate(flow.updated_at)}
@@ -140,6 +143,7 @@ export default async function FlowsPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

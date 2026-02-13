@@ -76,7 +76,7 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
       {/* Logic Toggle */}
       {conditions.length > 1 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Match</span>
+          <span className="text-xs text-muted-foreground">Match</span>
           <button
             type="button"
             onClick={toggleLogic}
@@ -89,7 +89,7 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
           >
             {logic === "and" ? "ALL" : "ANY"}
           </button>
-          <span className="text-xs text-gray-500">conditions</span>
+          <span className="text-xs text-muted-foreground">conditions</span>
         </div>
       )}
 
@@ -111,15 +111,15 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
                 </span>
               </div>
             )}
-            <div className="rounded-lg border border-gray-200 bg-white p-3">
+            <div className="rounded-lg border border-border bg-card p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-medium text-gray-500">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Condition {index + 1}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeCondition(index)}
-                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -132,7 +132,7 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
                   onChange={(e) =>
                     updateCondition(index, { ...condition, field: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   {fieldOptions.map((f) => (
                     <option key={f.value} value={f.value}>
@@ -147,7 +147,7 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
                   onChange={(e) =>
                     updateCondition(index, { ...condition, operator: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   {operatorOptions.map((o) => (
                     <option key={o.value} value={o.value}>
@@ -165,7 +165,7 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
                       updateCondition(index, { ...condition, value: e.target.value })
                     }
                     placeholder="Value..."
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 )}
               </div>
@@ -178,14 +178,14 @@ export function ConditionPanel({ data: rawData, onChange }: ConditionPanelProps)
       <button
         type="button"
         onClick={addCondition}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 py-3 text-sm font-medium text-gray-500 transition-colors hover:border-amber-400 hover:text-amber-500"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-amber-400 hover:text-amber-500"
       >
         <Plus className="h-4 w-4" />
         Add Condition
       </button>
 
       {conditions.length === 0 && (
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-muted-foreground">
           Add conditions to create branching logic. Contacts matching the conditions go to the "Yes" path, others go to "No".
         </p>
       )}

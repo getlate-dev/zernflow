@@ -22,6 +22,7 @@ import {
   revokeInvite,
 } from "@/lib/actions/team";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface MemberDetail {
   userId: string;
@@ -85,6 +86,8 @@ export function TeamView({
   // Remove member
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{ userId: string; name: string } | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -109,14 +112,7 @@ export function TeamView({
     setInviting(false);
   }
 
-  async function handleRemove(userId: string, name: string) {
-    if (
-      !confirm(
-        `Remove ${name} from this workspace? They will lose access immediately.`
-      )
-    )
-      return;
-
+  async function handleRemove(userId: string) {
     setRemovingId(userId);
 
     const result = await removeTeamMember(workspaceId, userId);
@@ -129,8 +125,6 @@ export function TeamView({
   }
 
   async function handleRevoke(inviteId: string) {
-    if (!confirm("Revoke this invite?")) return;
-
     setRevokingId(inviteId);
 
     const result = await revokeInvite(inviteId);
@@ -223,7 +217,7 @@ export function TeamView({
                     {isOwner && member.userId !== currentUserId && (
                       <button
                         onClick={() =>
-                          handleRemove(member.userId, member.name)
+                          setConfirmRemove({ userId: member.userId, name: member.name })
                         }
                         disabled={removingId === member.userId}
                         className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
@@ -366,7 +360,7 @@ export function TeamView({
 
                         {isOwner && (
                           <button
-                            onClick={() => handleRevoke(invite.id)}
+                            onClick={() => setConfirmRevoke(invite.id)}
                             disabled={revokingId === invite.id}
                             className="shrink-0 ml-4 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                             title="Revoke invite"
@@ -387,6 +381,30 @@ export function TeamView({
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={!!confirmRemove}
+        title="Remove member"
+        message={`Are you sure you want to remove ${confirmRemove?.name ?? "this member"} from the workspace?`}
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          if (confirmRemove) handleRemove(confirmRemove.userId);
+          setConfirmRemove(null);
+        }}
+        onCancel={() => setConfirmRemove(null)}
+      />
+      <ConfirmDialog
+        open={!!confirmRevoke}
+        title="Revoke invite"
+        message="Are you sure you want to revoke this invitation?"
+        confirmLabel="Revoke"
+        destructive
+        onConfirm={() => {
+          if (confirmRevoke) handleRevoke(confirmRevoke);
+          setConfirmRevoke(null);
+        }}
+        onCancel={() => setConfirmRevoke(null)}
+      />
     </div>
   );
 }

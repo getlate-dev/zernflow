@@ -82,7 +82,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
     <div className="space-y-5">
       {/* Trigger Type */}
       <div>
-        <label className="mb-2 block text-xs font-semibold text-gray-700">
+        <label className="mb-2 block text-xs font-semibold text-foreground">
           Trigger Type
         </label>
         <div className="space-y-1.5">
@@ -93,7 +93,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
                 "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors",
                 triggerType === t.value
                   ? "border-emerald-500 bg-emerald-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  : "border-border bg-card hover:border-input"
               )}
             >
               <input
@@ -102,11 +102,11 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
                 value={t.value}
                 checked={triggerType === t.value}
                 onChange={() => handleTriggerTypeChange(t.value)}
-                className="mt-0.5 h-4 w-4 border-gray-300 text-emerald-500 focus:ring-emerald-500"
+                className="mt-0.5 h-4 w-4 border-input text-emerald-500 focus:ring-emerald-500"
               />
               <div>
-                <p className="text-sm font-medium text-gray-900">{t.label}</p>
-                <p className="text-xs text-gray-500">{t.description}</p>
+                <p className="text-sm font-medium text-foreground">{t.label}</p>
+                <p className="text-xs text-muted-foreground">{t.description}</p>
               </div>
             </label>
           ))}
@@ -116,7 +116,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
       {/* Keywords Section */}
       {showKeywords && (
         <div>
-          <label className="mb-2 block text-xs font-semibold text-gray-700">
+          <label className="mb-2 block text-xs font-semibold text-foreground">
             Keywords
           </label>
 
@@ -126,9 +126,9 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
               {keywords.map((keyword, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-card p-2"
                 >
-                  <span className="flex-1 truncate text-sm text-gray-900">
+                  <span className="flex-1 truncate text-sm text-foreground">
                     {keyword.value}
                   </span>
                   <select
@@ -136,7 +136,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
                     onChange={(e) =>
                       updateKeywordMatchType(index, e.target.value as "exact" | "contains" | "startsWith")
                     }
-                    className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700"
+                    className="rounded border border-border bg-muted px-2 py-1 text-xs text-foreground"
                   >
                     {matchTypes.map((m) => (
                       <option key={m.value} value={m.value}>
@@ -147,7 +147,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
                   <button
                     type="button"
                     onClick={() => removeKeyword(index)}
-                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    className="rounded p-1 text-muted-foreground/60 hover:bg-muted hover:text-muted-foreground"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -169,12 +169,12 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
                 }
               }}
               placeholder="Enter keyword..."
-              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
             <select
               value={newMatchType}
               onChange={(e) => setNewMatchType(e.target.value as "exact" | "contains" | "startsWith")}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               {matchTypes.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -193,7 +193,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
           </div>
 
           {keywords.length === 0 && (
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-muted-foreground">
               Add keywords that will trigger this flow. Press Enter or click + to add.
             </p>
           )}
@@ -203,7 +203,7 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
       {/* Payload Section */}
       {showPayload && (
         <div>
-          <label className="mb-2 block text-xs font-semibold text-gray-700">
+          <label className="mb-2 block text-xs font-semibold text-foreground">
             Payload
           </label>
           <input
@@ -211,9 +211,9 @@ export function TriggerPanel({ data: rawData, onChange }: TriggerPanelProps) {
             value={data.payload || ""}
             onChange={(e) => onChange({ ...data, payload: e.target.value })}
             placeholder="Enter payload value..."
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           />
-          <p className="mt-1.5 text-xs text-gray-500">
+          <p className="mt-1.5 text-xs text-muted-foreground">
             The payload value to match when a {triggerType === "postback" ? "button is clicked" : "quick reply is tapped"}.
           </p>
         </div>

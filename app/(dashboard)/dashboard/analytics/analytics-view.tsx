@@ -85,28 +85,109 @@ function formatShortDate(dateStr: string): string {
   });
 }
 
-// --- Simple bar chart ---
+// --- Simple bar chart with tooltip ---
 
 function MiniBarChart({
   data,
+  labels,
   maxVal,
   color,
 }: {
   data: number[];
+  labels?: string[];
   maxVal: number;
   color: string;
 }) {
+  const [hovered, setHovered] = useState<number | null>(null);
   const safeMax = maxVal || 1;
   return (
-    <div className="flex items-end gap-[2px] h-16">
+    <div className="relative flex items-end gap-[2px] h-16">
       {data.map((val, i) => (
         <div
           key={i}
-          className={cn("flex-1 rounded-t-sm min-h-[2px]", color)}
-          style={{ height: `${(val / safeMax) * 100}%` }}
-        />
+          className="group relative h-full flex-1 flex items-end cursor-pointer"
+          onMouseEnter={() => setHovered(i)}
+          onMouseLeave={() => setHovered(null)}
+        >
+          <div
+            className={cn(
+              "w-full rounded-t-sm min-h-[2px] transition-opacity",
+              color,
+              hovered !== null && hovered !== i && "opacity-40"
+            )}
+            style={{ height: `${(val / safeMax) * 100}%` }}
+          />
+          {hovered === i && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-lg pointer-events-none">
+              <p className="font-medium">{val}</p>
+              {labels?.[i] && <p className="text-background/70">{labels[i]}</p>}
+            </div>
+          )}
+        </div>
       ))}
     </div>
+  );
+}
+
+// --- Stacked bar chart for message volume ---
+
+function MessageVolumeChart({
+  data,
+  maxVal,
+}: {
+  data: DailyMessages[];
+  maxVal: number;
+}) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const safeMax = maxVal || 1;
+
+  return (
+    <>
+      <div className="relative flex items-end gap-[2px] h-16">
+        {data.map((d, i) => {
+          const sentPct = (d.sent / safeMax) * 100;
+          const failedPct = (d.failed / safeMax) * 100;
+          return (
+            <div
+              key={i}
+              className="relative h-full flex flex-1 flex-col items-stretch justify-end cursor-pointer"
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {failedPct > 0 && (
+                <div
+                  className={cn(
+                    "bg-red-500 rounded-t-sm min-h-[1px] transition-opacity",
+                    hovered !== null && hovered !== i && "opacity-40"
+                  )}
+                  style={{ height: `${failedPct}%` }}
+                />
+              )}
+              {sentPct > 0 && (
+                <div
+                  className={cn(
+                    "bg-green-500 min-h-[1px] transition-opacity",
+                    failedPct === 0 && "rounded-t-sm",
+                    hovered !== null && hovered !== i && "opacity-40"
+                  )}
+                  style={{ height: `${sentPct}%` }}
+                />
+              )}
+              {hovered === i && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-lg pointer-events-none">
+                  <p className="font-medium">{d.sent} sent{d.failed > 0 ? `, ${d.failed} failed` : ""}</p>
+                  <p className="text-background/70">{formatShortDate(d.date)}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+        <span>{formatShortDate(data[0].date)}</span>
+        <span>{formatShortDate(data[data.length - 1].date)}</span>
+      </div>
+    </>
   );
 }
 
@@ -196,10 +277,9 @@ export function AnalyticsView({
           .select("id, name")
           .eq("workspace_id", workspaceId),
         supabase
-          .from("analytics_events")
+          .from("contacts")
           .select("created_at")
           .eq("workspace_id", workspaceId)
-          .eq("event_type", "contact_created")
           .gte("created_at", range.start)
           .lte("created_at", range.end)
           .order("created_at"),
@@ -437,6 +517,7 @@ export function AnalyticsView({
                   <>
                     <MiniBarChart
                       data={contactGrowth.map((d) => d.count)}
+                      labels={contactGrowth.map((d) => formatShortDate(d.date))}
                       maxVal={maxContactGrowth}
                       color="bg-purple-500"
                     />
@@ -472,51 +553,7 @@ export function AnalyticsView({
                   </div>
                 </div>
                 {messageVolume.length > 0 ? (
-                  <>
-                    <div className="flex items-end gap-[2px] h-16">
-                      {messageVolume.map((d, i) => {
-                        const total = d.sent + d.failed;
-                        const sentPct =
-                          total > 0
-                            ? (d.sent / (maxMessageVolume || 1)) * 100
-                            : 0;
-                        const failedPct =
-                          total > 0
-                            ? (d.failed / (maxMessageVolume || 1)) * 100
-                            : 0;
-                        return (
-                          <div
-                            key={i}
-                            className="flex flex-1 flex-col items-stretch justify-end"
-                          >
-                            {failedPct > 0 && (
-                              <div
-                                className="bg-red-500 rounded-t-sm min-h-[1px]"
-                                style={{ height: `${failedPct}%` }}
-                              />
-                            )}
-                            {sentPct > 0 && (
-                              <div
-                                className={cn(
-                                  "bg-green-500 min-h-[1px]",
-                                  failedPct === 0 && "rounded-t-sm"
-                                )}
-                                style={{ height: `${sentPct}%` }}
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                      <span>{formatShortDate(messageVolume[0].date)}</span>
-                      <span>
-                        {formatShortDate(
-                          messageVolume[messageVolume.length - 1].date
-                        )}
-                      </span>
-                    </div>
-                  </>
+                  <MessageVolumeChart data={messageVolume} maxVal={maxMessageVolume} />
                 ) : (
                   <p className="text-sm text-muted-foreground py-8 text-center">
                     No data for this period
