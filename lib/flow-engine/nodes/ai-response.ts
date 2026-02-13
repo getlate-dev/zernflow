@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
 import type { FlowExecutionContext, AiResponseNodeData } from "../types";
 import { createLateClient } from "@/lib/late-client";
-import { generateText, type LanguageModelV1 } from "ai";
+import { generateText, type LanguageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
@@ -13,7 +13,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   google: "gemini-2.0-flash",
 };
 
-function createModel(provider: string, apiKey: string, modelId: string): LanguageModelV1 {
+function createModel(provider: string, apiKey: string, modelId: string): LanguageModel {
   switch (provider) {
     case "anthropic": {
       const anthropic = createAnthropic({ apiKey });
