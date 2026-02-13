@@ -20,8 +20,7 @@ export function CreateSequenceButton() {
 
       if (result.error) {
         console.error("Failed to create sequence:", result.error);
-        pendingRef.current = false;
-        setCreating(false);
+        alert(`Failed to create sequence: ${result.error}`);
         return;
       }
 
@@ -30,6 +29,8 @@ export function CreateSequenceButton() {
       }
     } catch (err) {
       console.error("Failed to create sequence:", err);
+      alert(`Failed to create sequence: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
       pendingRef.current = false;
       setCreating(false);
     }

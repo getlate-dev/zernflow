@@ -112,8 +112,10 @@ export async function executeFlow(
   const startNode = nodes.find((n) => n.id === firstEdge.target);
   if (!startNode) return;
 
-  await traverseNodes(supabase, session.id, startNode, nodes, edges, context);
+  await traverseNodes(supabase, session.id, startNode, nodes, edges, context, 0);
 }
+
+const MAX_TRAVERSAL_DEPTH = 50;
 
 async function resumeSession(
   supabase: SupabaseClient<Database>,
@@ -180,7 +182,7 @@ async function resumeSession(
     return;
   }
 
-  await traverseNodes(supabase, session.id, nextNode, nodes, edges, context);
+  await traverseNodes(supabase, session.id, nextNode, nodes, edges, context, 0);
 }
 
 async function traverseNodes(
@@ -189,8 +191,14 @@ async function traverseNodes(
   node: FlowNode,
   nodes: FlowNode[],
   edges: FlowEdge[],
-  context: FlowExecutionContext
+  context: FlowExecutionContext,
+  depth: number = 0
 ) {
+  if (depth >= MAX_TRAVERSAL_DEPTH) {
+    console.error(`Flow traversal exceeded max depth (${MAX_TRAVERSAL_DEPTH}), stopping. Flow: ${context.flowId}`);
+    await completeSession(supabase, sessionId);
+    return;
+  }
   // Update current node
   await supabase
     .from("flow_sessions")
@@ -237,7 +245,7 @@ async function traverseNodes(
   }
 
   // Continue to next node
-  await traverseNodes(supabase, sessionId, nextNode, nodes, edges, context);
+  await traverseNodes(supabase, sessionId, nextNode, nodes, edges, context, depth + 1);
 }
 
 async function executeNode(

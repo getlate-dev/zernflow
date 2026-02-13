@@ -23,6 +23,7 @@ export function CreateFlowButton() {
 
       if (!res.ok) {
         console.error("Failed to create flow");
+        alert("Failed to create flow. Please try again.");
         return;
       }
 
@@ -30,6 +31,8 @@ export function CreateFlowButton() {
       router.push(`/dashboard/flows/${flow.id}`);
     } catch (err) {
       console.error("Failed to create flow:", err);
+      alert("Failed to create flow. Please try again.");
+    } finally {
       pendingRef.current = false;
       setCreating(false);
     }

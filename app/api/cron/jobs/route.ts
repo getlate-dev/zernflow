@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("key") ||
     request.headers.get("authorization")?.replace("Bearer ", "");
 
-  if (cronSecret && providedSecret !== cronSecret) {
+  if (!cronSecret || providedSecret !== cronSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
