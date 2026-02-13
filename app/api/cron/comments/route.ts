@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { createLateClient } from "@/lib/late-client";
 import { processComment } from "@/lib/comment-processor";
 import type { Database } from "@/lib/types/database";
 
@@ -135,31 +134,32 @@ async function pollChannelComments(
     .single();
 
   if (!workspace?.late_api_key_encrypted) {
+    console.error(`No Late API key for workspace ${channel.workspace_id}`);
     return { processed: 0, matched: 0, errors: 0 };
   }
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const apiKey = workspace.late_api_key_encrypted;
 
-  // Fetch recent posts for this channel via Late API
-  let posts: Array<{ id: string; platforms: string[] }>;
+  // Fetch posts from the inbox/comments endpoint (covers ALL posts, not just Late-published)
+  let posts: Array<{ id: string; commentCount: number }>;
   try {
-    const res = await late.posts.listPosts({
-      query: {
-        platform: channel.platform,
-        status: "published",
-        limit: 50,
-      },
-    });
+    const res = await fetch(
+      `https://getlate.dev/api/v1/inbox/comments?accountId=${channel.late_account_id}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
 
-    const postItems = (res.data as any)?.posts ?? [];
-    posts = postItems
-      .filter((item: any) => item?._id || item?.id)
-      .map((item: any) => ({
-        id: item._id || item.id,
-        platforms: item.platforms?.map((p: any) => p.platform) || [channel.platform],
-      }));
+    if (!res.ok) {
+      console.error(`Failed to fetch inbox comments for channel ${channel.id}: ${res.status}`);
+      return { processed: 0, matched: 0, errors: 1 };
+    }
+
+    const data = await res.json();
+    posts = (data.data ?? []).map((item: any) => ({
+      id: item.id,
+      commentCount: item.commentCount ?? 0,
+    }));
   } catch (err) {
-    console.error(`Failed to fetch posts for channel ${channel.id}:`, err);
+    console.error(`Failed to fetch inbox comments for channel ${channel.id}:`, err);
     return { processed: 0, matched: 0, errors: 1 };
   }
 
@@ -175,31 +175,38 @@ async function pollChannelComments(
 
   for (const post of posts) {
     try {
-      const commentsRes = await late.comments.getInboxPostComments({
-        path: { postId: post.id },
-        query: { accountId: channel.late_account_id },
-      });
+      const commentsRes = await fetch(
+        `https://getlate.dev/api/v1/inbox/comments/${post.id}?accountId=${channel.late_account_id}`,
+        { headers: { Authorization: `Bearer ${apiKey}` } }
+      );
 
-      const comments = (commentsRes.data as any)?.comments ?? [];
-      if (!comments.length) continue;
+      if (!commentsRes.ok) continue;
+
+      const commentsData = await commentsRes.json();
+      // Flatten top-level comments and their replies
+      const rawComments = commentsData.comments ?? [];
+      const allComments: any[] = [];
+      for (const c of rawComments) {
+        allComments.push(c);
+        if (c.replies?.length) {
+          allComments.push(...c.replies);
+        }
+      }
+
+      if (!allComments.length) continue;
 
       // Sort by created date ascending so we process oldest first
-      const sortedComments = comments.sort(
+      const sortedComments = allComments.sort(
         (a: any, b: any) =>
           new Date(a.createdTime).getTime() - new Date(b.createdTime).getTime()
       );
 
-      // Filter to comments we have not seen yet (after cursor)
-      let newComments = sortedComments;
-      if (cursor) {
-        const cursorIndex = sortedComments.findIndex((c: any) => c.id === cursor);
-        if (cursorIndex >= 0) {
-          newComments = sortedComments.slice(cursorIndex + 1);
-        }
-        // If cursor not found in this post, check if we already logged this comment
-      }
+      // Skip comments from the account owner
+      const nonOwnerComments = sortedComments.filter(
+        (c: any) => !c.from?.isOwner
+      );
 
-      for (const comment of newComments) {
+      for (const comment of nonOwnerComments) {
         // Check if already processed (dedup via unique index)
         const { data: existing } = await supabase
           .from("comment_logs")
