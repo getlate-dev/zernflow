@@ -197,6 +197,21 @@ async function processJob(
           b_id: payload.broadcastId,
         });
       }
+
+      // Check if all recipients are done (no more "pending")
+      const { count } = await supabase
+        .from("broadcast_recipients")
+        .select("id", { count: "exact", head: true })
+        .eq("broadcast_id", payload.broadcastId)
+        .eq("status", "pending");
+
+      if (count === 0) {
+        await supabase
+          .from("broadcasts")
+          .update({ status: "completed" })
+          .eq("id", payload.broadcastId)
+          .eq("status", "sending");
+      }
       break;
     }
 
