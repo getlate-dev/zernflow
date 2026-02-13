@@ -6,7 +6,6 @@ import {
   Plus,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Send,
   Loader2,
   XCircle,
@@ -14,6 +13,8 @@ import {
   Calendar,
   Filter,
   ChevronDown,
+  ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -33,32 +34,27 @@ const statusConfig: Record<
   draft: {
     label: "Draft",
     icon: FileEdit,
-    className:
-      "bg-muted text-muted-foreground",
+    className: "bg-muted text-muted-foreground",
   },
   scheduled: {
     label: "Scheduled",
     icon: Clock,
-    className:
-      "bg-blue-100 text-blue-700",
+    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   },
   sending: {
     label: "Sending",
     icon: Loader2,
-    className:
-      "bg-yellow-100 text-yellow-700",
+    className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   },
   completed: {
     label: "Completed",
     icon: CheckCircle2,
-    className:
-      "bg-green-100 text-green-700",
+    className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   },
   cancelled: {
     label: "Cancelled",
     icon: XCircle,
-    className:
-      "bg-red-100 text-red-700",
+    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   },
 };
 
@@ -88,6 +84,7 @@ export function BroadcastsView({
     createEmptyFilter()
   );
   const [showSegmentFilter, setShowSegmentFilter] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   async function handleCreate() {
     if (!newName.trim() || creating) return;
@@ -102,7 +99,9 @@ export function BroadcastsView({
           name: newName.trim(),
           status: "draft",
           message_content: {},
-          segment_filter: showSegmentFilter ? (segmentFilter as unknown as Json) : null,
+          segment_filter: showSegmentFilter
+            ? (segmentFilter as unknown as Json)
+            : null,
         })
         .select()
         .single();
@@ -112,12 +111,32 @@ export function BroadcastsView({
         setItems((prev) => [data, ...prev]);
         setNewName("");
         setShowCreate(false);
+        setSelectedId(data.id);
       }
     } catch (err) {
       console.error("Failed to create broadcast:", err);
     } finally {
       setCreating(false);
     }
+  }
+
+  const selectedBroadcast = selectedId
+    ? items.find((b) => b.id === selectedId) ?? null
+    : null;
+
+  if (selectedBroadcast) {
+    return (
+      <BroadcastDetail
+        broadcast={selectedBroadcast}
+        workspaceId={workspaceId}
+        onBack={() => setSelectedId(null)}
+        onUpdate={(updated) => {
+          setItems((prev) =>
+            prev.map((b) => (b.id === updated.id ? updated : b))
+          );
+        }}
+      />
+    );
   }
 
   return (
@@ -232,9 +251,10 @@ export function BroadcastsView({
               const total = broadcast.total_recipients;
 
               return (
-                <div
+                <button
                   key={broadcast.id}
-                  className="flex items-center gap-6 px-8 py-4 transition-colors hover:bg-accent/50"
+                  onClick={() => setSelectedId(broadcast.id)}
+                  className="flex w-full items-center gap-6 px-8 py-4 text-left transition-colors hover:bg-accent/50"
                 >
                   {/* Status + Name */}
                   <div className="min-w-0 flex-1">
@@ -303,11 +323,233 @@ export function BroadcastsView({
                       </p>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function BroadcastDetail({
+  broadcast,
+  workspaceId,
+  onBack,
+  onUpdate,
+}: {
+  broadcast: Broadcast;
+  workspaceId: string;
+  onBack: () => void;
+  onUpdate: (updated: Broadcast) => void;
+}) {
+  const messageContent = broadcast.message_content as { text?: string } | null;
+  const [messageText, setMessageText] = useState(messageContent?.text || "");
+  const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const isDraft = broadcast.status === "draft" || broadcast.status === "scheduled";
+  const status = statusConfig[broadcast.status];
+  const StatusIcon = status.icon;
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const newContent = { text: messageText.trim() };
+      const { data, error: err } = await supabase
+        .from("broadcasts")
+        .update({ message_content: newContent as unknown as Json })
+        .eq("id", broadcast.id)
+        .select()
+        .single();
+
+      if (err) throw err;
+      if (data) onUpdate(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!messageText.trim()) {
+      setError("Message cannot be empty");
+      return;
+    }
+
+    setSending(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/v1/broadcasts/${broadcast.id}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageContent: { text: messageText.trim() },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send broadcast");
+      }
+
+      setSuccess(`Sending to ${data.totalRecipients} recipients`);
+
+      // Update the broadcast locally
+      onUpdate({
+        ...broadcast,
+        status: "sending",
+        total_recipients: data.totalRecipients,
+        message_content: { text: messageText.trim() } as unknown as Json,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="border-b border-border px-8 py-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">{broadcast.name}</h1>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                  status.className
+                )}
+              >
+                <StatusIcon
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    broadcast.status === "sending" && "animate-spin"
+                  )}
+                />
+                {status.label}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Created {formatDate(broadcast.created_at)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto px-8 py-6">
+        <div className="mx-auto max-w-2xl space-y-6">
+          {/* Stats row for non-draft broadcasts */}
+          {broadcast.total_recipients > 0 && (
+            <div className="grid grid-cols-4 gap-4">
+              <div className="rounded-lg border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold">{broadcast.total_recipients}</p>
+                <p className="text-xs text-muted-foreground">Recipients</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-green-600">{broadcast.sent}</p>
+                <p className="text-xs text-muted-foreground">Sent</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-blue-600">{broadcast.delivered}</p>
+                <p className="text-xs text-muted-foreground">Delivered</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-red-600">{broadcast.failed}</p>
+                <p className="text-xs text-muted-foreground">Failed</p>
+              </div>
+            </div>
+          )}
+
+          {/* Message composer */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Message</label>
+            <textarea
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              disabled={!isDraft}
+              placeholder="Type your broadcast message here..."
+              rows={6}
+              className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            {isDraft && (
+              <p className="text-xs text-muted-foreground">
+                This message will be sent to all contacts matching your segment
+                filter{broadcast.segment_filter ? "" : " (all subscribed contacts)"}.
+              </p>
+            )}
+          </div>
+
+          {/* Segment info */}
+          {broadcast.segment_filter && (
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                Segment filter applied
+              </div>
+              <pre className="mt-2 overflow-auto rounded bg-muted p-3 text-xs text-muted-foreground">
+                {JSON.stringify(broadcast.segment_filter, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Error/Success messages */}
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              {success}
+            </div>
+          )}
+
+          {/* Actions */}
+          {isDraft && (
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={handleSend}
+                disabled={sending || !messageText.trim()}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {sending ? "Sending..." : "Send Now"}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || !messageText.trim()}
+                className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Draft"}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
