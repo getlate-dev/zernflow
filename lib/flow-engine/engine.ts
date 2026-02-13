@@ -331,10 +331,9 @@ async function executeSendMessage(
         ? [{ type: "image", url: adapted.imageUrl }]
         : undefined;
 
-      const response = await late.sendMessage(lateAccountId, {
-        conversationId: lateConversationId,
-        text,
-        imageUrl: adapted.imageUrl,
+      const response = await late.messages.sendInboxMessage({
+        path: { conversationId: lateConversationId },
+        body: { accountId: lateAccountId, message: text },
       });
 
       // Store outbound message
@@ -345,7 +344,7 @@ async function executeSendMessage(
         attachments: attachments || null,
         sent_by_flow_id: context.flowId,
         sent_by_node_id: null,
-        platform_message_id: response?.messageId || null,
+        platform_message_id: response.data?.data?.messageId || null,
         status: "sent",
       });
     } catch (error) {
@@ -688,10 +687,9 @@ async function executeCommentReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.replyComment({
-      commentId,
-      platforms: [context.platform!],
-      comment: text,
+    await late.comments.replyToInboxPost({
+      path: { postId },
+      body: { accountId: lateAccountId, message: text, commentId },
     });
   } catch (error) {
     console.error("Failed to post comment reply:", error);
@@ -742,11 +740,9 @@ async function executePrivateReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.privateReplyToComment({
-      postId,
-      commentId,
-      accountId: lateAccountId,
-      message: text,
+    await late.comments.sendPrivateReplyToComment({
+      path: { postId, commentId },
+      body: { accountId: lateAccountId, message: text },
     });
 
     await supabase.from("messages").insert({

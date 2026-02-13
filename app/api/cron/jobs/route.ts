@@ -170,9 +170,9 @@ async function processJob(
       const messageContent = broadcastData?.message_content;
 
       try {
-        await late.sendMessage(channel.late_account_id, {
-          conversationId: conv.late_conversation_id,
-          text: messageContent?.text || "",
+        await late.messages.sendInboxMessage({
+          path: { conversationId: conv.late_conversation_id },
+          body: { accountId: channel.late_account_id, message: messageContent?.text || "" },
         });
 
         await supabase

@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
   // Send via Late SDK
   try {
     const late = createLateClient(workspace.late_api_key_encrypted);
-    const lateData = await late.sendMessage(channel.late_account_id, {
-      conversationId: conversation.late_conversation_id,
-      text,
+    const lateRes = await late.messages.sendInboxMessage({
+      path: { conversationId: conversation.late_conversation_id },
+      body: { accountId: channel.late_account_id, message: text },
     });
 
     // Store outbound message in Supabase
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         direction: "outbound",
         text,
         sent_by_user_id: user.id,
-        platform_message_id: lateData?.messageId || null,
+        platform_message_id: lateRes.data?.data?.messageId || null,
         status: "sent",
       })
       .select("*")

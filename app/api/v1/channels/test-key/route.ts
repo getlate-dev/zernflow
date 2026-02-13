@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const late = createLateClient(apiKey.trim());
-    const accounts = await late.listAccounts();
-    return NextResponse.json({ accounts });
+    const res = await late.accounts.listAccounts();
+    return NextResponse.json({ accounts: res.data?.accounts ?? [] });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Invalid API key or connection error";

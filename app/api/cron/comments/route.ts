@@ -140,26 +140,26 @@ async function pollChannelComments(
 
   const late = createLateClient(workspace.late_api_key_encrypted);
 
-  // Fetch recent posts for this channel via Late API history
+  // Fetch recent posts for this channel via Late API
   let posts: Array<{ id: string; platforms: string[] }>;
   try {
-    const historyResult = await late.history({
-      lastDays: 7,
-      platform: channel.platform,
+    const res = await late.posts.listPosts({
+      query: {
+        platform: channel.platform,
+        status: "published",
+        limit: 50,
+      },
     });
 
-    // SDK history() returns an array or a single item
-    const historyItems = Array.isArray(historyResult)
-      ? historyResult
-      : [historyResult];
-    posts = historyItems
-      .filter((item) => item?.id)
-      .map((item) => ({
-        id: item.id,
-        platforms: item.platforms || [channel.platform],
+    const postItems = (res.data as any)?.posts ?? [];
+    posts = postItems
+      .filter((item: any) => item?._id || item?.id)
+      .map((item: any) => ({
+        id: item._id || item.id,
+        platforms: item.platforms?.map((p: any) => p.platform) || [channel.platform],
       }));
   } catch (err) {
-    console.error(`Failed to fetch history for channel ${channel.id}:`, err);
+    console.error(`Failed to fetch posts for channel ${channel.id}:`, err);
     return { processed: 0, matched: 0, errors: 1 };
   }
 
@@ -175,20 +175,24 @@ async function pollChannelComments(
 
   for (const post of posts) {
     try {
-      const { comments } = await late.getComments({ id: post.id });
+      const commentsRes = await late.comments.getInboxPostComments({
+        path: { postId: post.id },
+        query: { accountId: channel.late_account_id },
+      });
 
-      if (!comments?.length) continue;
+      const comments = (commentsRes.data as any)?.comments ?? [];
+      if (!comments.length) continue;
 
       // Sort by created date ascending so we process oldest first
       const sortedComments = comments.sort(
-        (a, b) =>
-          new Date(a.created).getTime() - new Date(b.created).getTime()
+        (a: any, b: any) =>
+          new Date(a.createdTime).getTime() - new Date(b.createdTime).getTime()
       );
 
       // Filter to comments we have not seen yet (after cursor)
       let newComments = sortedComments;
       if (cursor) {
-        const cursorIndex = sortedComments.findIndex((c) => c.id === cursor);
+        const cursorIndex = sortedComments.findIndex((c: any) => c.id === cursor);
         if (cursorIndex >= 0) {
           newComments = sortedComments.slice(cursorIndex + 1);
         }
@@ -208,11 +212,15 @@ async function pollChannelComments(
 
         const result = await processComment(supabase, channel, {
           id: comment.id,
-          comment: comment.comment,
-          created: comment.created,
+          comment: comment.message || "",
+          created: comment.createdTime || "",
           platform: comment.platform || channel.platform,
           postId: post.id,
-          commenter: comment.commenter,
+          commenter: comment.from ? {
+            id: comment.from.id,
+            name: comment.from.name,
+            username: comment.from.username,
+          } : undefined,
         }, allTriggers);
 
         processed++;

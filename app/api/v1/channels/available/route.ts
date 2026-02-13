@@ -36,7 +36,8 @@ export async function GET() {
 
   try {
     // Fetch all accounts from Late API
-    const accounts = await late.listAccounts();
+    const res = await late.accounts.listAccounts();
+    const accounts: Array<{ _id?: string; platform?: string; username?: string; displayName?: string; profileUrl?: string; isActive?: boolean }> = res.data?.accounts ?? [];
 
     // Fetch already-connected channel late_account_ids for this workspace
     const { data: connectedChannels } = await supabase
@@ -49,7 +50,7 @@ export async function GET() {
     );
 
     // Filter out already-connected accounts
-    const available = accounts.filter((a) => !connectedIds.has(a._id));
+    const available = accounts.filter((a) => a._id && !connectedIds.has(a._id));
 
     return NextResponse.json({ accounts: available });
   } catch (error) {

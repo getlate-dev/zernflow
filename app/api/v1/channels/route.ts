@@ -93,11 +93,14 @@ export async function POST(request: NextRequest) {
     // Register webhook with Late API
     let webhookId: string | null = null;
     try {
-      const res = await late.registerWebhook({
-        action: "message.received",
-        url: getWebhookUrl(),
+      const res = await late.webhooks.createWebhookSettings({
+        body: {
+          events: ["message.received"],
+          url: getWebhookUrl(),
+        },
       });
-      webhookId = (res as any)?.id || (res as any)?.webhook?._id || null;
+      const data = res.data as Record<string, unknown> | undefined;
+      webhookId = (data?._id as string) || (data?.id as string) || null;
     } catch (e) {
       console.error("Failed to register webhook:", e);
       // Continue without webhook, channel can still be used for outbound
