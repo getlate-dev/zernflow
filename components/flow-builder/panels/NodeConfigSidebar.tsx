@@ -124,13 +124,23 @@ export function NodeConfigSidebar({ node, onChange, onClose, onDelete }: NodeCon
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onDelete(node.id)}
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-500"
+            title="Delete node"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Node Label */}
@@ -152,17 +162,6 @@ export function NodeConfigSidebar({ node, onChange, onClose, onDelete }: NodeCon
         {renderPanel()}
       </div>
 
-      {/* Delete */}
-      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => onDelete(node.id)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-800 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete node
-        </button>
-      </div>
     </div>
   );
 }
