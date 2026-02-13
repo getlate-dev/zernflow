@@ -253,17 +253,21 @@ async function handleWebhook(request: NextRequest) {
         incomingMessage
       );
       if (trigger) {
-        executeFlow(supabase, {
-          triggerId: trigger.id,
-          flowId: trigger.flow_id,
-          channelId: channel.id,
-          contactId,
-          conversationId: conversation.id,
-          workspaceId: channel.workspace_id,
-          incomingMessage,
-          lateConversationId: conv.id,
-          lateAccountId: account.id,
-        }).catch((err) => console.error("Flow execution error:", err));
+        try {
+          await executeFlow(supabase, {
+            triggerId: trigger.id,
+            flowId: trigger.flow_id,
+            channelId: channel.id,
+            contactId,
+            conversationId: conversation.id,
+            workspaceId: channel.workspace_id,
+            incomingMessage,
+            lateConversationId: conv.id,
+            lateAccountId: account.id,
+          });
+        } catch (err) {
+          console.error("Flow execution error:", err);
+        }
       }
     }
   }
