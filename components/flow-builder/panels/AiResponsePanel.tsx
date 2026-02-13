@@ -1,13 +1,10 @@
 "use client";
 
-const MODELS = [
-  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini", provider: "OpenAI" },
-  { id: "openai/gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-  { id: "openai/o3-mini", label: "o3-mini", provider: "OpenAI" },
-  { id: "anthropic/claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5", provider: "Anthropic" },
-  { id: "anthropic/claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", provider: "Anthropic" },
-  { id: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
-  { id: "google/gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro", provider: "Google" },
+const POPULAR_MODELS = [
+  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini" },
+  { id: "openai/gpt-4o", label: "GPT-4o" },
+  { id: "anthropic/claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5" },
+  { id: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash" },
 ];
 
 interface AiResponsePanelData {
@@ -27,16 +24,12 @@ interface AiResponsePanelProps {
 export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProps) {
   const data = rawData as AiResponsePanelData;
   const currentModel = data.model || "openai/gpt-4o-mini";
-  const modelInList = MODELS.some((m) => m.id === currentModel);
-
-  // Group models by provider for the optgroup display
-  const providers = [...new Set(MODELS.map((m) => m.provider))];
 
   return (
     <div className="space-y-4">
       {/* System Prompt */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
           System Prompt
         </label>
         <textarea
@@ -44,7 +37,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, systemPrompt: e.target.value })}
           placeholder="You are a helpful customer support agent..."
           rows={8}
-          className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <p className="mt-1 text-[11px] text-gray-400">
           Instructions for how the AI should behave and respond.
@@ -53,36 +46,50 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
 
       {/* Model */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
           Model
         </label>
-        <select
+        <input
+          type="text"
           value={currentModel}
           onChange={(e) => onChange({ ...data, model: e.target.value })}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          {providers.map((provider) => (
-            <optgroup key={provider} label={provider}>
-              {MODELS.filter((m) => m.provider === provider).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </optgroup>
+          placeholder="provider/model (e.g. openai/gpt-4o-mini)"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono text-gray-900 dark:text-white placeholder:text-gray-400 placeholder:font-sans focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {POPULAR_MODELS.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onChange({ ...data, model: m.id })}
+              className={`rounded-md border px-2 py-1 text-[11px] transition-colors ${
+                currentModel === m.id
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                  : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500"
+              }`}
+            >
+              {m.label}
+            </button>
           ))}
-          {!modelInList && (
-            <option value={currentModel}>{currentModel} (custom)</option>
-          )}
-        </select>
-        <p className="mt-1 text-[11px] text-gray-400">
-          Uses the Vercel AI Gateway. Configure provider keys in your Vercel project settings.
+        </div>
+        <p className="mt-1.5 text-[11px] text-gray-400">
+          Any model supported by{" "}
+          <a
+            href="https://vercel.com/ai-gateway"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
+            Vercel AI Gateway
+          </a>
+          . Format: provider/model-name
         </p>
       </div>
 
       {/* Temperature */}
       <div>
         <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-xs font-medium text-gray-600">Temperature</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Temperature</label>
           <span className="text-xs text-gray-500">{data.temperature ?? 0.7}</span>
         </div>
         <input
@@ -102,7 +109,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
 
       {/* Max Tokens */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
           Max Tokens
         </label>
         <input
@@ -111,7 +118,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, maxTokens: parseInt(e.target.value) || 500 })}
           min={1}
           max={4096}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <p className="mt-1 text-[11px] text-gray-400">
           Maximum length of the AI response.
@@ -120,7 +127,7 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
 
       {/* Context Messages */}
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+        <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
           Context Messages
         </label>
         <input
@@ -129,22 +136,11 @@ export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProp
           onChange={(e) => onChange({ ...data, contextMessages: parseInt(e.target.value) || 10 })}
           min={1}
           max={50}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <p className="mt-1 text-[11px] text-gray-400">
           How many past messages to include as context for the AI.
         </p>
-      </div>
-
-      {/* Info box */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <p className="text-xs font-medium text-gray-600">How it works</p>
-        <ul className="mt-1.5 space-y-1 text-[11px] text-gray-500">
-          <li>Fetches recent conversation messages for context</li>
-          <li>Generates a reply using the selected AI model</li>
-          <li>Sends the reply as a message in the conversation</li>
-          <li>Models from OpenAI, Anthropic, and Google via Vercel AI Gateway</li>
-        </ul>
       </div>
     </div>
   );
