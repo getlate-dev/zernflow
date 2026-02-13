@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Users,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +25,7 @@ interface WorkspaceSettings {
   id: string;
   name: string;
   hasApiKey: boolean;
+  hasAiKey: boolean;
   globalKeywords: string[];
 }
 
@@ -41,6 +43,8 @@ export function SettingsView({
   const [name, setName] = useState(workspace.name);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [aiKey, setAiKey] = useState("");
+  const [showAiKey, setShowAiKey] = useState(false);
   const [keywords, setKeywords] = useState<string[]>(workspace.globalKeywords);
   const [newKeyword, setNewKeyword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -120,9 +124,12 @@ export function SettingsView({
         global_keywords: keywords,
       };
 
-      // Only update API key if user entered a new one
+      // Only update keys if user entered new ones
       if (apiKey.trim()) {
         update.late_api_key_encrypted = apiKey.trim();
+      }
+      if (aiKey.trim()) {
+        update.ai_api_key = aiKey.trim();
       }
 
       const { error: updateError } = await supabase
@@ -139,6 +146,7 @@ export function SettingsView({
 
       setSaved(true);
       setApiKey("");
+      setAiKey("");
       setTestResult(null);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -280,6 +288,62 @@ export function SettingsView({
               <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
                 <Check className="h-3 w-3" />
                 API key configured
+              </p>
+            )}
+          </section>
+
+          <hr className="border-border" />
+
+          {/* AI Gateway API Key */}
+          <section>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold">AI Gateway</h2>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Required for the AI Response flow node. Uses{" "}
+              <a
+                href="https://vercel.com/ai-gateway"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                Vercel AI Gateway
+                <ExternalLink className="h-3 w-3" />
+              </a>{" "}
+              to access OpenAI, Anthropic, and Google models with a single key.
+              {workspace.hasAiKey && " A key is currently configured."}
+            </p>
+
+            <div className="mt-4 relative">
+              <input
+                type={showAiKey ? "text" : "password"}
+                value={aiKey}
+                onChange={(e) => setAiKey(e.target.value)}
+                placeholder={
+                  workspace.hasAiKey
+                    ? "Enter a new key to replace the current one"
+                    : "Enter your AI Gateway API key"
+                }
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm font-mono placeholder:text-muted-foreground placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={() => setShowAiKey(!showAiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showAiKey ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            {workspace.hasAiKey && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
+                <Check className="h-3 w-3" />
+                AI Gateway key configured
               </p>
             )}
           </section>

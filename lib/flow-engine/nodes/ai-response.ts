@@ -2,17 +2,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
 import type { FlowExecutionContext, AiResponseNodeData } from "../types";
 import { createLateClient } from "@/lib/late-client";
-import { generateText, gateway } from "ai";
+import { generateText, createGateway } from "ai";
 
 export async function executeAiResponse(
   supabase: SupabaseClient<Database>,
   data: AiResponseNodeData,
   context: FlowExecutionContext
 ) {
-  // Get workspace for Late API key
+  // Get workspace for Late API key + AI Gateway key
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("late_api_key_encrypted")
+    .select("late_api_key_encrypted, ai_api_key")
     .eq("id", context.workspaceId)
     .single();
 
@@ -78,8 +78,10 @@ export async function executeAiResponse(
 
   try {
     const model = data.model || "openai/gpt-4o-mini";
+    const aiGatewayKey = workspace.ai_api_key || process.env.AI_GATEWAY_API_KEY;
+    const gw = createGateway({ apiKey: aiGatewayKey || undefined });
     const result = await generateText({
-      model: gateway(model),
+      model: gw(model),
       system: data.systemPrompt || "You are a helpful customer support agent.",
       messages: aiMessages,
       temperature: data.temperature ?? 0.7,
