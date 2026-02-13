@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   GitBranch,
   MessageSquare,
@@ -12,9 +12,9 @@ import {
   Plug,
   Settings,
   LogOut,
-  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import type { Database } from "@/lib/types/database";
@@ -50,18 +50,6 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
-  const [isPending, startTransition] = useTransition();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
-
-  function handleNav(href: string) {
-    if (href === pathname) return;
-    setPendingHref(href);
-    startTransition(() => {
-      router.push(href);
-    });
-  }
-
-  const activePendingHref = isPending ? pendingHref : null;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -78,25 +66,20 @@ export function Sidebar({
       <nav className="flex-1 space-y-1 p-3">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
-          const isLoading = activePendingHref === item.href;
           return (
-            <button
+            <Link
               key={item.name}
-              onClick={() => handleNav(item.href)}
+              href={item.href}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <item.icon className="h-4 w-4" />
-              )}
+              <item.icon className="h-4 w-4" />
               {item.name}
-            </button>
+            </Link>
           );
         })}
       </nav>

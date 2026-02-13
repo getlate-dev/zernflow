@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import {
   Plug,
   Power,
@@ -151,11 +150,10 @@ export function ChannelsView({
                       {/* Avatar with platform badge */}
                       <div className="relative">
                         {channel.profile_picture ? (
-                          <Image
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
                             src={channel.profile_picture}
                             alt={channel.display_name ?? channel.username ?? label}
-                            width={40}
-                            height={40}
                             className="h-10 w-10 rounded-lg object-cover"
                           />
                         ) : (
