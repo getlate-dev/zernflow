@@ -19,7 +19,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useCallback, useRef, useState, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Rocket, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Rocket, Loader2, History, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, FlowStatus, Json } from "@/lib/types/database";
@@ -32,6 +32,8 @@ import { DelayNode } from "./nodes/delay-node";
 import { ActionNode } from "./nodes/action-node";
 import { AiResponseNode } from "./nodes/AiResponseNode";
 import { NodeConfigSidebar } from "./panels/NodeConfigSidebar";
+import { VersionHistoryPanel } from "./panels/VersionHistoryPanel";
+import { TestPanel } from "./panels/TestPanel";
 
 type Flow = Database["public"]["Tables"]["flows"]["Row"];
 
@@ -92,6 +94,9 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
   const [publishing, setPublishing] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [versionPanelOpen, setVersionPanelOpen] = useState(false);
+  const [testPanelOpen, setTestPanelOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) || null
@@ -213,9 +218,12 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
 
         if (error) {
           console.error("Failed to save flow:", error);
+          setSaveError("Failed to save");
+          setTimeout(() => setSaveError(null), 3000);
           return;
         }
 
+        setSaveError(null);
         setLastSaved(new Date());
       } finally {
         setSaving(false);
@@ -226,10 +234,28 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
   );
 
   const handleSave = useCallback(() => saveFlow(), [saveFlow]);
-  const handlePublish = useCallback(
-    () => saveFlow("published"),
-    [saveFlow]
-  );
+  const handlePublish = useCallback(async () => {
+    setPublishing(true);
+    try {
+      // First save the current state
+      await saveFlow();
+      // Then call the publish API which increments version and saves snapshot
+      const res = await fetch(`/api/v1/flows/${flow.id}/publish`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        console.error("Failed to publish flow");
+        setSaveError("Failed to publish");
+        setTimeout(() => setSaveError(null), 3000);
+        return;
+      }
+      setSaveError(null);
+      setLastSaved(new Date());
+      router.refresh();
+    } finally {
+      setPublishing(false);
+    }
+  }, [saveFlow, flow.id]);
 
   return (
     <div className="flex h-full flex-col">
@@ -248,7 +274,8 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             type="text"
             value={flowName}
             onChange={(e) => setFlowName(e.target.value)}
-            className="border-none bg-transparent text-sm font-semibold outline-none focus:ring-0"
+            className="w-auto max-w-[200px] border-none bg-transparent text-sm font-semibold outline-none focus:ring-0"
+            style={{ width: `${Math.max(flowName.length, 8)}ch` }}
             placeholder="Flow name"
           />
           <span
@@ -265,11 +292,52 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {lastSaved && (
+          {saveError && (
+            <span className="text-xs font-medium text-destructive">
+              {saveError}
+            </span>
+          )}
+          {!saveError && lastSaved && (
             <span className="text-xs text-muted-foreground">
               Saved {lastSaved.toLocaleTimeString()}
             </span>
           )}
+          <button
+            onClick={() => {
+              setTestPanelOpen(!testPanelOpen);
+              if (!testPanelOpen) {
+                setVersionPanelOpen(false);
+                setSelectedNodeId(null);
+              }
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+              testPanelOpen
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background hover:bg-accent"
+            )}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Test
+          </button>
+          <button
+            onClick={() => {
+              setVersionPanelOpen(!versionPanelOpen);
+              if (!versionPanelOpen) {
+                setTestPanelOpen(false);
+                setSelectedNodeId(null);
+              }
+            }}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+              versionPanelOpen
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background hover:bg-accent"
+            )}
+          >
+            <History className="h-3.5 w-3.5" />
+            History
+          </button>
           <button
             onClick={handleSave}
             disabled={saving}
@@ -328,12 +396,32 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             />
           </ReactFlow>
         </div>
-        {selectedNode && (
+        {selectedNode && !versionPanelOpen && !testPanelOpen && (
           <NodeConfigSidebar
             node={selectedNode}
             onChange={onNodeDataChange}
             onClose={closeSidebar}
             onDelete={deleteNode}
+          />
+        )}
+        {versionPanelOpen && (
+          <VersionHistoryPanel
+            flowId={flow.id}
+            currentVersion={flow.version}
+            onClose={() => setVersionPanelOpen(false)}
+            onRestore={() => router.refresh()}
+          />
+        )}
+        {testPanelOpen && (
+          <TestPanel
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setTestPanelOpen(false)}
+            onHighlightNode={(nodeId) => {
+              // Scroll to and highlight the node
+              const node = nodes.find((n) => n.id === nodeId);
+              if (node) setSelectedNodeId(nodeId);
+            }}
           />
         )}
       </div>

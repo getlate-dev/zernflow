@@ -24,17 +24,12 @@ export async function POST(
   if (!membership)
     return NextResponse.json({ error: "No workspace" }, { status: 404 });
 
-  // Update flow status to published
+  // Get current flow
   const { data: flow, error } = await supabase
     .from("flows")
-    .update({
-      status: "published",
-      published_at: new Date().toISOString(),
-      version: undefined, // Will be handled by the increment below
-    })
+    .select("*")
     .eq("id", flowId)
     .eq("workspace_id", membership.workspace_id)
-    .select("*")
     .single();
 
   if (error || !flow)
@@ -43,11 +38,27 @@ export async function POST(
       { status: 404 }
     );
 
-  // Increment version
+  // Update flow status to published and increment version
+  const newVersion = flow.version + 1;
   await supabase
     .from("flows")
-    .update({ version: flow.version + 1 })
+    .update({
+      status: "published",
+      published_at: new Date().toISOString(),
+      version: newVersion,
+    })
     .eq("id", flowId);
+
+  // Save version snapshot
+  await supabase.from("flow_versions").insert({
+    flow_id: flowId,
+    version: newVersion,
+    nodes: flow.nodes,
+    edges: flow.edges,
+    viewport: flow.viewport,
+    name: flow.name,
+    published_by: user.id,
+  });
 
   // Activate all triggers for this flow
   await supabase
@@ -55,5 +66,5 @@ export async function POST(
     .update({ is_active: true })
     .eq("flow_id", flowId);
 
-  return NextResponse.json({ ...flow, version: flow.version + 1 });
+  return NextResponse.json({ ...flow, version: newVersion });
 }

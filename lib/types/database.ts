@@ -396,6 +396,40 @@ export interface Database {
           },
         ];
       };
+      flow_versions: {
+        Row: {
+          id: string;
+          flow_id: string;
+          version: number;
+          nodes: Json;
+          edges: Json;
+          viewport: Json | null;
+          name: string;
+          published_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          flow_id: string;
+          version: number;
+          nodes: Json;
+          edges: Json;
+          viewport?: Json | null;
+          name: string;
+          published_by?: string | null;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: "flow_versions_flow_id_fkey";
+            columns: ["flow_id"];
+            isOneToOne: false;
+            referencedRelation: "flows";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       flows: {
         Row: {
           id: string;
