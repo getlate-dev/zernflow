@@ -36,7 +36,7 @@ ZernFlow is an open-source alternative to ManyChat. Build visual chatbot flows, 
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier works)
 - A [Late](https://getlate.dev) API key
-- An AI provider API key (optional, for AI node): [OpenAI](https://platform.openai.com), [Anthropic](https://console.anthropic.com), or [Google](https://aistudio.google.com)
+- AI provider keys configured in [Vercel AI Gateway](https://vercel.com/ai-gateway) (optional, for AI node)
 
 ### Setup
 
@@ -69,8 +69,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 LATE_API_KEY=your-late-api-key
-AI_API_KEY=your-ai-api-key               # Optional, for AI Response node (OpenAI/Anthropic/Google)
 CRON_SECRET=your-cron-secret              # For sequence processor + job scheduler
+# AI_GATEWAY_API_KEY=...                  # Optional, for self-hosted (Vercel handles this automatically)
 ```
 
 4. **Run**
@@ -108,7 +108,7 @@ Recv.  Engine     Chat           Processor
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Database + Auth + Realtime | Supabase |
 | Flow Builder | React Flow (@xyflow/react) |
-| AI | Vercel AI SDK (OpenAI, Anthropic, Google) |
+| AI | Vercel AI SDK + [AI Gateway](https://vercel.com/ai-gateway) |
 | UI | Tailwind CSS 4 |
 | Icons | @icons-pack/react-simple-icons |
 | Messaging | [Late API](https://getlate.dev) |

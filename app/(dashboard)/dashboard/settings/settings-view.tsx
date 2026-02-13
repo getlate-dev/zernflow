@@ -16,45 +16,14 @@ import {
   ExternalLink,
   Users,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-
-const AI_PROVIDERS = [
-  {
-    id: "openai",
-    name: "OpenAI",
-    placeholder: "sk-...",
-    keyUrl: "https://platform.openai.com/api-keys",
-    keyUrlLabel: "platform.openai.com",
-    models: "GPT-4o, GPT-4o Mini, o1, o3-mini",
-  },
-  {
-    id: "anthropic",
-    name: "Anthropic",
-    placeholder: "sk-ant-...",
-    keyUrl: "https://console.anthropic.com/settings/keys",
-    keyUrlLabel: "console.anthropic.com",
-    models: "Claude Sonnet 4.5, Claude Haiku 3.5",
-  },
-  {
-    id: "google",
-    name: "Google",
-    placeholder: "AIza...",
-    keyUrl: "https://aistudio.google.com/apikey",
-    keyUrlLabel: "aistudio.google.com",
-    models: "Gemini 2.0 Flash, Gemini 2.5 Pro",
-  },
-] as const;
 
 interface WorkspaceSettings {
   id: string;
   name: string;
   hasApiKey: boolean;
-  hasAiKey: boolean;
-  aiProvider: string;
   globalKeywords: string[];
 }
 
@@ -72,9 +41,6 @@ export function SettingsView({
   const [name, setName] = useState(workspace.name);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [aiKey, setAiKey] = useState("");
-  const [showAiKey, setShowAiKey] = useState(false);
-  const [aiProvider, setAiProvider] = useState(workspace.aiProvider);
   const [keywords, setKeywords] = useState<string[]>(workspace.globalKeywords);
   const [newKeyword, setNewKeyword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -82,8 +48,6 @@ export function SettingsView({
   const [error, setError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-
-  const selectedProvider = AI_PROVIDERS.find((p) => p.id === aiProvider) || AI_PROVIDERS[0];
 
   function addKeyword() {
     const trimmed = newKeyword.trim().toLowerCase();
@@ -154,15 +118,11 @@ export function SettingsView({
       const update: Record<string, unknown> = {
         name: name.trim(),
         global_keywords: keywords,
-        ai_provider: aiProvider,
       };
 
-      // Only update API keys if user entered new ones
+      // Only update API key if user entered a new one
       if (apiKey.trim()) {
         update.late_api_key_encrypted = apiKey.trim();
-      }
-      if (aiKey.trim()) {
-        update.ai_api_key = aiKey.trim();
       }
 
       const { error: updateError } = await supabase
@@ -179,7 +139,6 @@ export function SettingsView({
 
       setSaved(true);
       setApiKey("");
-      setAiKey("");
       setTestResult(null);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -318,92 +277,6 @@ export function SettingsView({
             </div>
 
             {workspace.hasApiKey && !testResult && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
-                <Check className="h-3 w-3" />
-                API key configured
-              </p>
-            )}
-          </section>
-
-          <hr className="border-border" />
-
-          {/* AI Provider & API Key */}
-          <section>
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold">AI Provider</h2>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Choose your AI provider for the AI Response flow node. Powered by the Vercel AI SDK, so you can use any supported provider.
-              {workspace.hasAiKey && " An API key is currently configured."}
-            </p>
-
-            {/* Provider selector */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {AI_PROVIDERS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setAiProvider(p.id)}
-                  className={cn(
-                    "rounded-lg border px-3 py-2.5 text-left transition-colors",
-                    aiProvider === p.id
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border bg-background hover:bg-muted"
-                  )}
-                >
-                  <span className="block text-sm font-medium">{p.name}</span>
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground leading-tight">
-                    {p.models}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* API Key input */}
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground">
-                {selectedProvider.name} API Key
-              </label>
-              <div className="mt-1.5 relative">
-                <input
-                  type={showAiKey ? "text" : "password"}
-                  value={aiKey}
-                  onChange={(e) => setAiKey(e.target.value)}
-                  placeholder={
-                    workspace.hasAiKey
-                      ? "Enter a new key to replace the current one"
-                      : selectedProvider.placeholder
-                  }
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm font-mono placeholder:text-muted-foreground placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowAiKey(!showAiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showAiKey ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Get your API key from{" "}
-                <a
-                  href={selectedProvider.keyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 text-primary underline underline-offset-2 hover:opacity-80"
-                >
-                  {selectedProvider.keyUrlLabel}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </p>
-            </div>
-
-            {workspace.hasAiKey && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-green-600">
                 <Check className="h-3 w-3" />
                 API key configured

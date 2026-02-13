@@ -2,57 +2,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
 import type { FlowExecutionContext, AiResponseNodeData } from "../types";
 import { createLateClient } from "@/lib/late-client";
-import { generateText, type LanguageModel } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-
-const DEFAULT_MODELS: Record<string, string> = {
-  openai: "gpt-4o-mini",
-  anthropic: "claude-sonnet-4-5-20250929",
-  google: "gemini-2.0-flash",
-};
-
-function createModel(provider: string, apiKey: string, modelId: string): LanguageModel {
-  switch (provider) {
-    case "anthropic": {
-      const anthropic = createAnthropic({ apiKey });
-      return anthropic(modelId || DEFAULT_MODELS.anthropic);
-    }
-    case "google": {
-      const google = createGoogleGenerativeAI({ apiKey });
-      return google(modelId || DEFAULT_MODELS.google);
-    }
-    case "openai":
-    default: {
-      const openai = createOpenAI({ apiKey });
-      return openai(modelId || DEFAULT_MODELS.openai);
-    }
-  }
-}
+import { generateText, gateway } from "ai";
 
 export async function executeAiResponse(
   supabase: SupabaseClient<Database>,
   data: AiResponseNodeData,
   context: FlowExecutionContext
 ) {
-  // Get workspace for API keys
+  // Get workspace for Late API key
   const { data: workspace } = await supabase
     .from("workspaces")
-    .select("late_api_key_encrypted, ai_api_key, ai_provider")
+    .select("late_api_key_encrypted")
     .eq("id", context.workspaceId)
     .single();
 
   if (!workspace?.late_api_key_encrypted) return;
 
-  const aiApiKey = workspace.ai_api_key || process.env.AI_API_KEY;
-  if (!aiApiKey) {
-    console.error("No AI API key configured for workspace:", context.workspaceId);
-    return;
-  }
-
-  const provider = workspace.ai_provider || "openai";
-  const model = createModel(provider, aiApiKey, data.model);
   const late = createLateClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id from channel if not in context
@@ -112,8 +77,9 @@ export async function executeAiResponse(
   }
 
   try {
+    const model = data.model || "openai/gpt-4o-mini";
     const result = await generateText({
-      model,
+      model: gateway(model),
       system: data.systemPrompt || "You are a helpful customer support agent.",
       messages: aiMessages,
       temperature: data.temperature ?? 0.7,

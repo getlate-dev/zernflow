@@ -17,7 +17,6 @@ interface NodeConfigSidebarProps {
   onChange: (nodeId: string, data: Record<string, unknown>) => void;
   onClose: () => void;
   onDelete: (nodeId: string) => void;
-  aiProvider?: string;
 }
 
 const nodeTypeConfig: Record<string, { label: string; icon: typeof Cog; color: string; borderColor: string }> = {
@@ -59,7 +58,7 @@ const nodeTypeConfig: Record<string, { label: string; icon: typeof Cog; color: s
   },
 };
 
-export function NodeConfigSidebar({ node, onChange, onClose, onDelete, aiProvider }: NodeConfigSidebarProps) {
+export function NodeConfigSidebar({ node, onChange, onClose, onDelete }: NodeConfigSidebarProps) {
   const nodeType = node.type || "action";
   const config = nodeTypeConfig[nodeType] || nodeTypeConfig.action;
   const Icon = config.icon;
@@ -101,7 +100,7 @@ export function NodeConfigSidebar({ node, onChange, onClose, onDelete, aiProvide
       case "delay":
         return <DelayPanel data={data} onChange={handleChange} />;
       case "aiResponse":
-        return <AiResponsePanel data={data} onChange={handleChange} aiProvider={aiProvider} />;
+        return <AiResponsePanel data={data} onChange={handleChange} />;
       case "action":
         return <ActionPanel data={data} onChange={handleChange} />;
       default:

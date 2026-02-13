@@ -1,20 +1,14 @@
 "use client";
 
-const PROVIDER_MODELS: Record<string, Array<{ id: string; label: string }>> = {
-  openai: [
-    { id: "gpt-4o-mini", label: "GPT-4o Mini (faster, cheaper)" },
-    { id: "gpt-4o", label: "GPT-4o (more capable)" },
-    { id: "o3-mini", label: "o3-mini (reasoning)" },
-  ],
-  anthropic: [
-    { id: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5 (balanced)" },
-    { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (fast, cheap)" },
-  ],
-  google: [
-    { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash (fast, cheap)" },
-    { id: "gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro (more capable)" },
-  ],
-};
+const MODELS = [
+  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini", provider: "OpenAI" },
+  { id: "openai/gpt-4o", label: "GPT-4o", provider: "OpenAI" },
+  { id: "openai/o3-mini", label: "o3-mini", provider: "OpenAI" },
+  { id: "anthropic/claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5", provider: "Anthropic" },
+  { id: "anthropic/claude-haiku-4-5-20251001", label: "Claude Haiku 4.5", provider: "Anthropic" },
+  { id: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
+  { id: "google/gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro", provider: "Google" },
+];
 
 interface AiResponsePanelData {
   systemPrompt?: string;
@@ -28,17 +22,15 @@ interface AiResponsePanelData {
 interface AiResponsePanelProps {
   data: Record<string, unknown>;
   onChange: (data: Record<string, unknown>) => void;
-  aiProvider?: string;
 }
 
-export function AiResponsePanel({ data: rawData, onChange, aiProvider = "openai" }: AiResponsePanelProps) {
+export function AiResponsePanel({ data: rawData, onChange }: AiResponsePanelProps) {
   const data = rawData as AiResponsePanelData;
-  const models = PROVIDER_MODELS[aiProvider] || PROVIDER_MODELS.openai;
-  const defaultModel = models[0]?.id || "gpt-4o-mini";
+  const currentModel = data.model || "openai/gpt-4o-mini";
+  const modelInList = MODELS.some((m) => m.id === currentModel);
 
-  // If current model doesn't belong to selected provider, show it as-is
-  const currentModel = data.model || defaultModel;
-  const modelInList = models.some((m) => m.id === currentModel);
+  // Group models by provider for the optgroup display
+  const providers = [...new Set(MODELS.map((m) => m.provider))];
 
   return (
     <div className="space-y-4">
@@ -69,17 +61,21 @@ export function AiResponsePanel({ data: rawData, onChange, aiProvider = "openai"
           onChange={(e) => onChange({ ...data, model: e.target.value })}
           className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
-          {models.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.label}
-            </option>
+          {providers.map((provider) => (
+            <optgroup key={provider} label={provider}>
+              {MODELS.filter((m) => m.provider === provider).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </optgroup>
           ))}
           {!modelInList && (
             <option value={currentModel}>{currentModel} (custom)</option>
           )}
         </select>
         <p className="mt-1 text-[11px] text-gray-400">
-          Provider configured in workspace settings. You can also type a custom model ID.
+          Uses the Vercel AI Gateway. Configure provider keys in your Vercel project settings.
         </p>
       </div>
 
@@ -147,7 +143,7 @@ export function AiResponsePanel({ data: rawData, onChange, aiProvider = "openai"
           <li>Fetches recent conversation messages for context</li>
           <li>Generates a reply using the selected AI model</li>
           <li>Sends the reply as a message in the conversation</li>
-          <li>AI provider and API key are set in workspace settings</li>
+          <li>Models from OpenAI, Anthropic, and Google via Vercel AI Gateway</li>
         </ul>
       </div>
     </div>

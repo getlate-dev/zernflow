@@ -46,7 +46,6 @@ const nodeTypes: NodeTypes = {
 
 interface FlowCanvasProps {
   flow: Flow;
-  aiProvider?: string;
 }
 
 let nodeId = 0;
@@ -65,7 +64,7 @@ function getDefaultData(type: string, actionType?: string): Record<string, unkno
     case "delay":
       return { duration: 5, unit: "minutes" };
     case "aiResponse":
-      return { systemPrompt: "", model: "gpt-4o-mini", temperature: 0.7, maxTokens: 500, contextMessages: 10 };
+      return { systemPrompt: "", model: "openai/gpt-4o-mini", temperature: 0.7, maxTokens: 500, contextMessages: 10 };
     case "action":
       return { actionType: actionType || "addTag" };
     default:
@@ -73,7 +72,7 @@ function getDefaultData(type: string, actionType?: string): Record<string, unkno
   }
 }
 
-function FlowCanvasInner({ flow, aiProvider }: FlowCanvasProps) {
+function FlowCanvasInner({ flow }: FlowCanvasProps) {
   const router = useRouter();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -335,7 +334,6 @@ function FlowCanvasInner({ flow, aiProvider }: FlowCanvasProps) {
             onChange={onNodeDataChange}
             onClose={closeSidebar}
             onDelete={deleteNode}
-            aiProvider={aiProvider}
           />
         )}
       </div>
@@ -343,10 +341,10 @@ function FlowCanvasInner({ flow, aiProvider }: FlowCanvasProps) {
   );
 }
 
-export function FlowCanvas({ flow, aiProvider }: FlowCanvasProps) {
+export function FlowCanvas({ flow }: FlowCanvasProps) {
   return (
     <ReactFlowProvider>
-      <FlowCanvasInner flow={flow} aiProvider={aiProvider} />
+      <FlowCanvasInner flow={flow} />
     </ReactFlowProvider>
   );
 }
