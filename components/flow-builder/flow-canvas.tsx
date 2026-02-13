@@ -170,6 +170,15 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
     setSelectedNodeId(null);
   }, []);
 
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      setSelectedNodeId(null);
+    },
+    [setNodes, setEdges]
+  );
+
   const saveFlow = useCallback(
     async (status?: FlowStatus) => {
       if (status === "published") {
@@ -320,6 +329,7 @@ function FlowCanvasInner({ flow }: FlowCanvasProps) {
             node={selectedNode}
             onChange={onNodeDataChange}
             onClose={closeSidebar}
+            onDelete={deleteNode}
           />
         )}
       </div>
