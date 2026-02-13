@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate the key by listing accounts
-  let accounts: Array<{ _id?: string; platform?: string; username?: string; displayName?: string }>;
+  let accounts: Array<{ _id?: string; platform?: string; username?: string; displayName?: string; profilePicture?: string }>;
   try {
     const late = createLateClient(apiKey.trim());
     const res = await late.accounts.listAccounts();
-    accounts = res.data?.accounts ?? [];
+    accounts = (res.data?.accounts ?? []) as typeof accounts;
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Invalid API key or connection error";
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         late_account_id: account._id,
         username: account.username || null,
         display_name: account.displayName || account.username || null,
-        profile_picture: null,
+        profile_picture: account.profilePicture || null,
         is_active: true,
       });
     }

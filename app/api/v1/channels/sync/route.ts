@@ -55,40 +55,42 @@ export async function POST() {
       (existingChannels ?? []).map((c) => [c.late_account_id, c])
     );
 
+    // The SDK type doesn't declare profilePicture but the API returns it
     const lateAccountIds = new Set(lateAccounts.map((a: { _id?: string }) => a._id).filter(Boolean));
     let created = 0;
     let updated = 0;
 
-    // Create or update channels for each Late account
     for (const account of lateAccounts) {
       if (!account._id) continue;
+      const acc = account as typeof account & { profilePicture?: string };
+      const profilePic = acc.profilePicture || null;
 
       const existing = existingByLateId.get(account._id);
 
       if (existing) {
-        // Update display info if changed
         if (
           existing.username !== (account.username || null) ||
-          existing.display_name !== (account.displayName || account.username || null)
+          existing.display_name !== (account.displayName || account.username || null) ||
+          existing.profile_picture !== profilePic
         ) {
           await supabase
             .from("channels")
             .update({
               username: account.username || null,
               display_name: account.displayName || account.username || null,
+              profile_picture: profilePic,
             })
             .eq("id", existing.id);
           updated++;
         }
       } else {
-        // Create new channel
         await supabase.from("channels").insert({
           workspace_id: workspace.id,
           platform: account.platform as "facebook" | "instagram" | "twitter" | "telegram" | "bluesky" | "reddit",
           late_account_id: account._id,
           username: account.username || null,
           display_name: account.displayName || account.username || null,
-          profile_picture: null,
+          profile_picture: profilePic,
           is_active: true,
         });
         created++;
