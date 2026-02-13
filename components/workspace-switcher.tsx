@@ -13,6 +13,10 @@ interface WorkspaceItem {
   role: string;
 }
 
+function avatarUrl(seed: string, size = 28) {
+  return `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&size=${size}`;
+}
+
 export function WorkspaceSwitcher({
   current,
   workspaces,
@@ -78,9 +82,11 @@ export function WorkspaceSwitcher({
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-sidebar-accent transition-colors"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-          {current.name.charAt(0).toUpperCase()}
-        </div>
+        <img
+          src={avatarUrl(current.id)}
+          alt=""
+          className="h-7 w-7 rounded-md"
+        />
         <span className="flex-1 truncate text-sm font-semibold text-sidebar-foreground">
           {current.name}
         </span>
@@ -110,9 +116,11 @@ export function WorkspaceSwitcher({
                     : "text-popover-foreground hover:bg-accent"
                 )}
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-muted text-[10px] font-bold">
-                  {ws.name.charAt(0).toUpperCase()}
-                </div>
+                <img
+                  src={avatarUrl(ws.id, 24)}
+                  alt=""
+                  className="h-6 w-6 rounded"
+                />
                 <span className="flex-1 truncate text-left">{ws.name}</span>
                 {isLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
