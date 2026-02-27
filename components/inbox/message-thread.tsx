@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Paperclip, Bot, User, MessageSquare, CheckCircle, Clock, RotateCcw, Loader2 } from "lucide-react";
+import { Send, Paperclip, Bot, User, MessageSquare, CheckCircle, Clock, RotateCcw, Loader2, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { PlatformIcon } from "@/components/platform-icon";
@@ -11,6 +11,17 @@ import type { Database, ConversationStatus } from "@/lib/types/database";
 type Message = Database["public"]["Tables"]["messages"]["Row"];
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"] & {
   contacts: Database["public"]["Tables"]["contacts"]["Row"] | null;
+};
+
+/** Represents a saved reply (canned response) fetched from the API */
+type SavedReply = {
+  id: string;
+  workspace_id: string;
+  title: string;
+  content: string;
+  shortcut: string | null;
+  created_by: string;
+  created_at: string;
 };
 
 function formatMessageTime(dateStr: string): string {
@@ -129,6 +140,13 @@ export function MessageThread({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Saved replies (canned responses) state
+  const [showReplies, setShowReplies] = useState(false);
+  const [savedReplies, setSavedReplies] = useState<SavedReply[]>([]);
+  // Tracks the slash-command filter text (e.g. typing "/greet" filters by shortcut)
+  const [slashFilter, setSlashFilter] = useState<string | null>(null);
+  const repliesDropdownRef = useRef<HTMLDivElement>(null);
+
   const updateConversationStatus = useCallback(async (status: ConversationStatus) => {
     if (!conversation || statusUpdating) return;
     setStatusUpdating(status);
@@ -152,6 +170,39 @@ export function MessageThread({
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
   }, []);
+
+  // Fetch saved replies on mount so they're ready when the user clicks the picker
+  useEffect(() => {
+    async function fetchReplies() {
+      try {
+        const res = await fetch("/api/v1/saved-replies");
+        if (res.ok) {
+          const json = await res.json();
+          setSavedReplies(json.data || []);
+        }
+      } catch {
+        // Silently fail; saved replies are non-critical UI convenience
+      }
+    }
+    fetchReplies();
+  }, []);
+
+  // Close the saved replies dropdown when clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        repliesDropdownRef.current &&
+        !repliesDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowReplies(false);
+        setSlashFilter(null);
+      }
+    }
+    if (showReplies) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showReplies]);
 
   useEffect(() => {
     setMessages(initialMessages);
@@ -219,6 +270,40 @@ export function MessageThread({
       supabase.removeChannel(channel);
     };
   }, [conversation?.id]);
+
+  /**
+   * Inserts a saved reply's content into the textarea.
+   * If the user was typing a slash command (e.g. "/greet"), the slash command
+   * text is replaced with the reply content. Otherwise, the content is simply
+   * set as the textarea value.
+   */
+  function insertSavedReply(reply: SavedReply) {
+    if (slashFilter !== null) {
+      // Replace the slash command text with the reply content
+      setInput(reply.content);
+    } else {
+      // Append or set the reply content
+      setInput((prev) => (prev ? prev + reply.content : reply.content));
+    }
+    setShowReplies(false);
+    setSlashFilter(null);
+    // Focus the textarea so the user can continue typing or send
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  }
+
+  /**
+   * Computes the list of saved replies to display, filtered by slash command
+   * shortcut when the user is typing a "/" prefix.
+   */
+  function getFilteredReplies(): SavedReply[] {
+    if (slashFilter === null || slashFilter === "") return savedReplies;
+    const query = slashFilter.toLowerCase();
+    return savedReplies.filter(
+      (r) =>
+        r.shortcut?.toLowerCase().startsWith(query) ||
+        r.title.toLowerCase().includes(query)
+    );
+  }
 
   async function handleSend() {
     if (!input.trim() || !conversation || sending) return;
@@ -404,26 +489,107 @@ export function MessageThread({
       {/* Composer */}
       <div className="border-t border-border p-4">
         <div className="mx-auto flex max-w-2xl items-end gap-2">
-          <div className="flex-1">
+          <div className="relative flex-1">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => {
-                setInput(e.target.value);
+                const value = e.target.value;
+                setInput(value);
                 autoResize();
+
+                // Detect slash command: if the input starts with "/" and has no spaces yet,
+                // show the saved replies dropdown filtered by the text after the slash
+                if (value.startsWith("/") && !value.includes(" ")) {
+                  const filter = value.slice(1); // strip the leading "/"
+                  setSlashFilter(filter);
+                  setShowReplies(true);
+                } else if (slashFilter !== null) {
+                  // User moved past the slash command (e.g. typed a space), close the dropdown
+                  setSlashFilter(null);
+                  setShowReplies(false);
+                }
               }}
               onKeyDown={(e) => {
+                // Close dropdown on Escape
+                if (e.key === "Escape" && showReplies) {
+                  e.preventDefault();
+                  setShowReplies(false);
+                  setSlashFilter(null);
+                  return;
+                }
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+                  // If the slash dropdown is open and there's exactly one match, insert it
+                  if (showReplies) {
+                    const filtered = getFilteredReplies();
+                    if (filtered.length === 1) {
+                      insertSavedReply(filtered[0]);
+                      return;
+                    }
+                  }
                   handleSend();
                 }
               }}
-              placeholder="Type a message..."
+              placeholder="Type a message... (/ for saved replies)"
               rows={1}
               className="w-full resize-none rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               style={{ maxHeight: 150 }}
             />
+
+            {/* Saved replies dropdown, positioned above the textarea */}
+            {showReplies && (
+              <div
+                ref={repliesDropdownRef}
+                className="absolute bottom-full left-0 z-50 mb-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
+              >
+                {getFilteredReplies().length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    No saved replies found
+                  </div>
+                ) : (
+                  getFilteredReplies().map((reply) => (
+                    <button
+                      key={reply.id}
+                      onClick={() => insertSavedReply(reply)}
+                      className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-accent transition-colors"
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span className="text-sm font-medium">{reply.title}</span>
+                        {reply.shortcut && (
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            /{reply.shortcut}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground line-clamp-1">
+                        {reply.content}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Saved replies picker button */}
+          <button
+            onClick={() => {
+              setShowReplies((prev) => !prev);
+              if (showReplies) setSlashFilter(null);
+            }}
+            aria-label="Saved replies"
+            title="Saved replies"
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
+              showReplies
+                ? "bg-accent text-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            <FileText className="h-4 w-4" />
+          </button>
+
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}

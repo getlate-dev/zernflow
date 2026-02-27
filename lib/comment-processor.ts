@@ -24,8 +24,14 @@ interface CommentKeywordConfig {
     value: string;
     matchType?: "exact" | "contains" | "startsWith";
   }>;
+  /** Only match comments on these specific posts (all posts if empty/undefined) */
   postIds?: string[];
+  /** Default public reply text posted under the matching comment */
   replyText?: string;
+  /** Keywords that disqualify a comment even if a regular keyword matched */
+  excludeKeywords?: string[];
+  /** Alternative reply texts; when set, a random one is chosen instead of replyText */
+  replyVariations?: string[];
 }
 
 /**
@@ -56,24 +62,29 @@ export async function processComment(
       continue;
     }
 
+    let keywordHit = false;
+
     for (const kw of config.keywords) {
       const keyword = kw.value.toLowerCase();
       const matchType = kw.matchType || "contains";
 
-      if (matchType === "exact" && text === keyword) {
-        matchedTrigger = trigger;
-        break;
-      }
-      if (matchType === "contains" && text.includes(keyword)) {
-        matchedTrigger = trigger;
-        break;
-      }
-      if (matchType === "startsWith" && text.startsWith(keyword)) {
-        matchedTrigger = trigger;
-        break;
-      }
+      if (matchType === "exact" && text === keyword) { keywordHit = true; break; }
+      if (matchType === "contains" && text.includes(keyword)) { keywordHit = true; break; }
+      if (matchType === "startsWith" && text.startsWith(keyword)) { keywordHit = true; break; }
     }
 
+    if (!keywordHit) continue;
+
+    // Check exclude keywords: if the comment contains any excluded term,
+    // skip this trigger entirely and try the next one
+    if (config.excludeKeywords && config.excludeKeywords.length > 0) {
+      const excluded = config.excludeKeywords.some((ek) =>
+        text.includes(ek.toLowerCase())
+      );
+      if (excluded) continue;
+    }
+
+    matchedTrigger = trigger;
     if (matchedTrigger) break;
   }
 
@@ -158,15 +169,26 @@ export async function processComment(
     let replySent = false;
     let dmSent = false;
 
+    // Determine the reply text to use. If replyVariations are configured,
+    // pick one at random for a more natural feel. Otherwise fall back to the
+    // static replyText.
+    let finalReplyText: string | undefined = config.replyText;
+    if (config.replyVariations && config.replyVariations.length > 0) {
+      finalReplyText =
+        config.replyVariations[
+          Math.floor(Math.random() * config.replyVariations.length)
+        ];
+    }
+
     // Post public reply if configured
-    if (config.replyText && workspace?.late_api_key_encrypted) {
+    if (finalReplyText && workspace?.late_api_key_encrypted) {
       try {
         const late = createLateClient(workspace.late_api_key_encrypted);
         await late.comments.replyToInboxPost({
           path: { postId: comment.postId },
           body: {
             accountId: channel.late_account_id,
-            message: config.replyText,
+            message: finalReplyText,
             commentId: comment.id,
           },
         });

@@ -116,6 +116,7 @@ export function InboxView({
       {showContactPanel && selected?.contact_id && (
         <ContactPanel
           contactId={selected.contact_id}
+          conversationId={selected.id}
           workspaceId={workspaceId}
           onClose={() => setShowContactPanel(false)}
         />

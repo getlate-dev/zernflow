@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NodeAnalyticsBadge } from "../node-analytics-badge";
 
 export interface ConditionNodeProps {
   label?: string;
@@ -23,7 +24,7 @@ const operatorLabels: Record<string, string> = {
   lt: "<",
 };
 
-export function ConditionNode({ data, selected }: NodeProps) {
+export function ConditionNode({ id, data, selected }: NodeProps) {
   const nodeData = data as ConditionNodeProps;
   const label = nodeData.label || "Condition";
   const conditions = nodeData.conditions || [];
@@ -32,10 +33,11 @@ export function ConditionNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
+        "relative w-56 rounded-lg border bg-card shadow-sm transition-shadow",
         selected ? "border-amber-500 shadow-md" : "border-border"
       )}
     >
+      <NodeAnalyticsBadge nodeId={id} />
       <Handle
         type="target"
         position={Position.Top}

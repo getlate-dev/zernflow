@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/sequences",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/broadcasts",
+      "schedule": "* * * * *"
     }
   ]
 }

@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NodeAnalyticsBadge } from "../node-analytics-badge";
 
 export interface SendMessageNodeProps {
   label?: string;
@@ -14,7 +15,7 @@ export interface SendMessageNodeProps {
   }>;
 }
 
-export function SendMessageNode({ data, selected }: NodeProps) {
+export function SendMessageNode({ id, data, selected }: NodeProps) {
   const nodeData = data as SendMessageNodeProps;
   const label = nodeData.label || "Send Message";
   const firstMessage = nodeData.messages?.[0];
@@ -28,10 +29,11 @@ export function SendMessageNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
+        "relative w-56 rounded-lg border bg-card shadow-sm transition-shadow",
         selected ? "border-blue-500 shadow-md" : "border-border"
       )}
     >
+      <NodeAnalyticsBadge nodeId={id} />
       <Handle
         type="target"
         position={Position.Top}

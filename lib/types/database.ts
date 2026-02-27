@@ -79,6 +79,8 @@ export interface Database {
           late_api_key_encrypted: string | null;
           ai_api_key: string | null;
           ai_provider: string;
+          auto_assign_mode: string;
+          last_assigned_member_index: number;
           global_keywords: Json | null;
           created_at: string;
           updated_at: string;
@@ -90,6 +92,8 @@ export interface Database {
           late_api_key_encrypted?: string | null;
           ai_api_key?: string | null;
           ai_provider?: string;
+          auto_assign_mode?: string;
+          last_assigned_member_index?: number;
           global_keywords?: Json | null;
           created_at?: string;
           updated_at?: string;
@@ -101,6 +105,8 @@ export interface Database {
           late_api_key_encrypted?: string | null;
           ai_api_key?: string | null;
           ai_provider?: string;
+          auto_assign_mode?: string;
+          last_assigned_member_index?: number;
           global_keywords?: Json | null;
           updated_at?: string;
         };
@@ -1007,6 +1013,253 @@ export interface Database {
           },
         ];
       };
+      api_keys: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          last_used_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      conversation_notes: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          workspace_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          workspace_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversation_notes_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "conversation_notes_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ref_links: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          flow_id: string;
+          channel_id: string | null;
+          name: string;
+          slug: string;
+          clicks: number;
+          conversions: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          flow_id: string;
+          channel_id?: string | null;
+          name: string;
+          slug: string;
+          clicks?: number;
+          conversions?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          flow_id?: string;
+          channel_id?: string | null;
+          slug?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ref_links_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ref_links_flow_id_fkey";
+            columns: ["flow_id"];
+            isOneToOne: false;
+            referencedRelation: "flows";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      saved_replies: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          title: string;
+          content: string;
+          shortcut: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          title: string;
+          content: string;
+          shortcut?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          title?: string;
+          content?: string;
+          shortcut?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "saved_replies_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bot_fields: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          slug: string;
+          value: string;
+          description: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          slug: string;
+          value?: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          value?: string;
+          description?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bot_fields_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      webhook_endpoints: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          url: string;
+          name: string;
+          events: string[];
+          secret: string | null;
+          is_active: boolean;
+          last_triggered_at: string | null;
+          failure_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          url: string;
+          name: string;
+          events?: string[];
+          secret?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          url?: string;
+          name?: string;
+          events?: string[];
+          secret?: string | null;
+          is_active?: boolean;
+          last_triggered_at?: string | null;
+          failure_count?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoints_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       sequence_enrollments: {
         Row: {
           id: string;
@@ -1081,6 +1334,18 @@ export interface Database {
       increment_broadcast_failed: {
         Args: {
           b_id: string;
+        };
+        Returns: undefined;
+      };
+      increment_ref_link_clicks: {
+        Args: {
+          link_id: string;
+        };
+        Returns: undefined;
+      };
+      increment_ref_link_conversions: {
+        Args: {
+          link_id: string;
         };
         Returns: undefined;
       };

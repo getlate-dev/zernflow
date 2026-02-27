@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NodeAnalyticsBadge } from "../node-analytics-badge";
 
 export interface TriggerNodeProps {
   label?: string;
@@ -19,7 +20,7 @@ const triggerLabels: Record<string, string> = {
   comment_keyword: "Comment Keyword",
 };
 
-export function TriggerNode({ data, selected }: NodeProps) {
+export function TriggerNode({ id, data, selected }: NodeProps) {
   const nodeData = data as TriggerNodeProps;
   const triggerType = nodeData.triggerType || "keyword";
   const label = nodeData.label || triggerLabels[triggerType] || "Trigger";
@@ -27,10 +28,11 @@ export function TriggerNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
+        "relative w-56 rounded-lg border bg-card shadow-sm transition-shadow",
         selected ? "border-emerald-500 shadow-md" : "border-border"
       )}
     >
+      <NodeAnalyticsBadge nodeId={id} />
       <div className="flex items-center gap-2 rounded-t-lg bg-emerald-500 px-3 py-2 text-white">
         <Zap className="h-3.5 w-3.5" />
         <span className="text-xs font-semibold">Trigger</span>

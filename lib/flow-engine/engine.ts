@@ -20,6 +20,7 @@ import type {
 import { executeAiResponse } from "./nodes/ai-response";
 import { adaptMessage } from "./platform-adapter";
 import { createLateClient } from "@/lib/late-client";
+import { dispatchWebhookEvent } from "@/lib/webhook-dispatcher";
 
 export async function executeFlow(
   supabase: SupabaseClient<Database>,
@@ -77,6 +78,22 @@ export async function executeFlow(
     }
   }
 
+  // Load bot fields for {{bot.field_slug}} interpolation.
+  // We fetch all bot fields for this workspace and inject them into context.variables
+  // with a "bot." prefix so the existing synchronous interpolateVariables function
+  // can resolve them without needing async DB calls.
+  const { data: botFields } = await supabase
+    .from("bot_fields")
+    .select("slug, value")
+    .eq("workspace_id", context.workspaceId);
+
+  if (botFields) {
+    if (!context.variables) context.variables = {};
+    for (const bf of botFields) {
+      context.variables[`bot.${bf.slug}`] = bf.value;
+    }
+  }
+
   // Create session
   const { data: session } = await supabase
     .from("flow_sessions")
@@ -100,6 +117,14 @@ export async function executeFlow(
     event_type: "flow_started",
     metadata: { triggerId: context.triggerId },
   });
+
+  // Fire-and-forget: notify outbound webhooks about the flow start
+  dispatchWebhookEvent(context.workspaceId, "flow.started", {
+    flowId: context.flowId,
+    contactId: context.contactId,
+    channelId: context.channelId,
+    triggerId: context.triggerId,
+  }).catch(() => {});
 
   // Find the trigger node (entry point)
   const triggerNode = nodes.find((n) => n.type === "trigger");
@@ -158,6 +183,20 @@ async function resumeSession(
   }
 
   context.variables = (session.variables as Record<string, string>) || {};
+
+  // Load bot fields for {{bot.field_slug}} interpolation (same as in executeFlow).
+  // We re-fetch here so resumed sessions pick up any bot field value changes
+  // that occurred while the session was paused.
+  const { data: botFields } = await supabase
+    .from("bot_fields")
+    .select("slug, value")
+    .eq("workspace_id", context.workspaceId);
+
+  if (botFields) {
+    for (const bf of botFields) {
+      context.variables[`bot.${bf.slug}`] = bf.value;
+    }
+  }
 
   // Update session
   await supabase
@@ -397,6 +436,14 @@ async function executeSendMessage(
         contact_id: context.contactId,
         event_type: "message_sent",
       });
+
+      // Fire-and-forget: notify outbound webhooks about the sent message
+      dispatchWebhookEvent(context.workspaceId, "message.sent", {
+        contactId: context.contactId,
+        conversationId: context.conversationId,
+        text,
+        flowId: context.flowId,
+      }).catch(() => {});
     } catch (error) {
       console.error("Failed to send message:", error);
       await supabase.from("messages").insert({
@@ -566,12 +613,26 @@ async function executeTag(
       .from("contact_tags")
       .upsert({ contact_id: context.contactId, tag_id: tag.id })
       .select();
+
+    // Fire-and-forget: notify outbound webhooks about the tag addition
+    dispatchWebhookEvent(context.workspaceId, "tag.added", {
+      contactId: context.contactId,
+      tagId: tag.id,
+      tagName: data.tagName,
+    }).catch(() => {});
   } else {
     await supabase
       .from("contact_tags")
       .delete()
       .eq("contact_id", context.contactId)
       .eq("tag_id", tag.id);
+
+    // Fire-and-forget: notify outbound webhooks about the tag removal
+    dispatchWebhookEvent(context.workspaceId, "tag.removed", {
+      contactId: context.contactId,
+      tagId: tag.id,
+      tagName: data.tagName,
+    }).catch(() => {});
   }
 }
 
@@ -850,6 +911,13 @@ async function completeSession(
         contact_id: session.contact_id,
         event_type: "flow_completed",
       });
+
+      // Fire-and-forget: notify outbound webhooks about the flow completion
+      dispatchWebhookEvent(flow.workspace_id, "flow.completed", {
+        flowId: session.flow_id,
+        contactId: session.contact_id,
+        channelId: session.channel_id,
+      }).catch(() => {});
     }
   }
 }
@@ -905,11 +973,16 @@ async function executeEnrollSequence(
   }
 }
 
+/**
+ * Replace {{variable}} placeholders in text with their values from the variables map.
+ * Supports dotted names like {{bot.field_slug}} for bot fields.
+ * Unresolved placeholders are left as-is (e.g. {{unknown}} stays in the text).
+ */
 function interpolateVariables(
   text: string,
   variables: Record<string, unknown>
 ): string {
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+  return text.replace(/\{\{([\w.]+)\}\}/g, (_, key) => {
     return String(variables[key] ?? `{{${key}}}`);
   });
 }

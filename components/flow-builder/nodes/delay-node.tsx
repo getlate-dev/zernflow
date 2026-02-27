@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NodeAnalyticsBadge } from "../node-analytics-badge";
 
 export interface DelayNodeProps {
   label?: string;
@@ -10,7 +11,7 @@ export interface DelayNodeProps {
   unit?: "seconds" | "minutes" | "hours" | "days";
 }
 
-export function DelayNode({ data, selected }: NodeProps) {
+export function DelayNode({ id, data, selected }: NodeProps) {
   const nodeData = data as DelayNodeProps;
   const label = nodeData.label || "Delay";
   const duration = nodeData.duration || 0;
@@ -22,10 +23,11 @@ export function DelayNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
+        "relative w-56 rounded-lg border bg-card shadow-sm transition-shadow",
         selected ? "border-purple-500 shadow-md" : "border-border"
       )}
     >
+      <NodeAnalyticsBadge nodeId={id} />
       <Handle
         type="target"
         position={Position.Top}

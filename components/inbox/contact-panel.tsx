@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Mail,
@@ -8,6 +8,9 @@ import {
   Tag,
   User,
   Hash,
+  StickyNote,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -20,6 +23,8 @@ type CustomFieldDef =
   Database["public"]["Tables"]["custom_field_definitions"]["Row"];
 type CustomFieldValue =
   Database["public"]["Tables"]["contact_custom_fields"]["Row"];
+type ConversationNote =
+  Database["public"]["Tables"]["conversation_notes"]["Row"];
 
 interface ContactDetails {
   contact: Contact;
@@ -44,15 +49,91 @@ function formatDate(dateStr: string | null): string {
 
 export function ContactPanel({
   contactId,
+  conversationId,
   workspaceId,
   onClose,
 }: {
   contactId: string | null;
+  conversationId: string | null;
   workspaceId: string;
   onClose: () => void;
 }) {
   const [details, setDetails] = useState<ContactDetails | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // --- Internal notes state ---
+  const [notes, setNotes] = useState<ConversationNote[]>([]);
+  const [notesOpen, setNotesOpen] = useState(true);
+  const [noteText, setNoteText] = useState("");
+  const [addingNote, setAddingNote] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+
+  /** Fetch notes for the current conversation */
+  const fetchNotes = useCallback(async () => {
+    if (!conversationId) {
+      setNotes([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/v1/conversations/${conversationId}/notes`
+      );
+      if (res.ok) {
+        const json = await res.json();
+        setNotes(json.data ?? []);
+      }
+    } catch {
+      // Silently fail; notes are non-critical
+    }
+  }, [conversationId]);
+
+  // Re-fetch notes when conversation changes
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  /** Add a new note */
+  async function handleAddNote() {
+    if (!conversationId || !noteText.trim()) return;
+    setAddingNote(true);
+    try {
+      const res = await fetch(
+        `/api/v1/conversations/${conversationId}/notes`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: noteText.trim() }),
+        }
+      );
+      if (res.ok) {
+        setNoteText("");
+        await fetchNotes();
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setAddingNote(false);
+    }
+  }
+
+  /** Delete a note by ID */
+  async function handleDeleteNote(noteId: string) {
+    if (!conversationId) return;
+    setDeletingNoteId(noteId);
+    try {
+      const res = await fetch(
+        `/api/v1/conversations/${conversationId}/notes/${noteId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setDeletingNoteId(null);
+    }
+  }
 
   useEffect(() => {
     if (!contactId) {
@@ -282,6 +363,107 @@ export function ContactPanel({
               </div>
             )}
           </div>
+
+          {/* Internal Notes */}
+          {conversationId && (
+            <div className="border-t border-border">
+              {/* Collapsible header */}
+              <button
+                onClick={() => setNotesOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between px-4 py-3 text-xs font-medium uppercase text-muted-foreground hover:bg-accent/50 transition-colors"
+              >
+                <span className="flex items-center gap-1.5">
+                  <StickyNote className="h-3 w-3" />
+                  Internal Notes
+                  {notes.length > 0 && (
+                    <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                      {notes.length}
+                    </span>
+                  )}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform",
+                    notesOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {notesOpen && (
+                <div className="px-4 pb-4 space-y-3">
+                  {/* Existing notes */}
+                  {notes.length > 0 ? (
+                    <div className="space-y-2">
+                      {notes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="group relative rounded-md border border-amber-200 bg-amber-50 p-2.5 dark:border-amber-800/50 dark:bg-amber-950/30"
+                        >
+                          <p className="whitespace-pre-wrap text-xs text-amber-900 dark:text-amber-200">
+                            {note.content}
+                          </p>
+                          <div className="mt-1.5 flex items-center justify-between">
+                            <span className="text-[10px] text-amber-600/70 dark:text-amber-400/60">
+                              {new Date(note.created_at).toLocaleDateString([], {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteNote(note.id)}
+                              disabled={deletingNoteId === note.id}
+                              className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-amber-500 hover:bg-amber-200/60 hover:text-amber-700 dark:hover:bg-amber-800/40 dark:hover:text-amber-300 transition-opacity"
+                              aria-label="Delete note"
+                            >
+                              {deletingNoteId === note.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <X className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No notes yet</p>
+                  )}
+
+                  {/* Add note form */}
+                  <div className="space-y-2">
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder="Add an internal note..."
+                      rows={2}
+                      className="w-full resize-none rounded-md border border-border bg-background px-2.5 py-1.5 text-xs placeholder:text-muted-foreground focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:focus:border-amber-600 dark:focus:ring-amber-600"
+                      onKeyDown={(e) => {
+                        // Cmd/Ctrl+Enter to submit
+                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddNote();
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={handleAddNote}
+                      disabled={addingNote || !noteText.trim()}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-md bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60 transition-colors"
+                    >
+                      {addingNote ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <StickyNote className="h-3 w-3" />
+                      )}
+                      {addingNote ? "Adding..." : "Add note"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">

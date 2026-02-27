@@ -3,6 +3,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NodeAnalyticsBadge } from "../node-analytics-badge";
 
 export interface AiResponseNodeProps {
   label?: string;
@@ -10,7 +11,7 @@ export interface AiResponseNodeProps {
   model?: string;
 }
 
-export function AiResponseNode({ data, selected }: NodeProps) {
+export function AiResponseNode({ id, data, selected }: NodeProps) {
   const nodeData = data as AiResponseNodeProps;
   const label = nodeData.label || "AI Response";
   const prompt = nodeData.systemPrompt;
@@ -18,10 +19,11 @@ export function AiResponseNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        "w-56 rounded-lg border bg-card shadow-sm transition-shadow",
+        "relative w-56 rounded-lg border bg-card shadow-sm transition-shadow",
         selected ? "border-violet-500 shadow-md" : "border-border"
       )}
     >
+      <NodeAnalyticsBadge nodeId={id} />
       <Handle
         type="target"
         position={Position.Top}

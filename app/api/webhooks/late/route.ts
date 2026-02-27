@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { executeFlow } from "@/lib/flow-engine/engine";
 import { matchTrigger } from "@/lib/flow-engine/trigger-matcher";
+import { dispatchWebhookEvent } from "@/lib/webhook-dispatcher";
 import crypto from "crypto";
 
 // ── Late API webhook payload (actual shape from status-webhook.ts) ───────────
@@ -209,6 +210,13 @@ async function handleWebhook(request: NextRequest) {
       contact_id: contactId,
       event_type: "contact_created",
     });
+
+    // Fire-and-forget: notify outbound webhooks about the new contact
+    dispatchWebhookEvent(channel.workspace_id, "contact.created", {
+      contactId,
+      displayName: senderName,
+      platform: channel.platform,
+    }).catch(() => {});
   }
 
   // ── Upsert conversation ──────────────────────────────────────────────────
@@ -250,6 +258,46 @@ async function handleWebhook(request: NextRequest) {
       .then(() => {});
   }
 
+  // ── Auto-assign new conversations (round-robin) ──────────────────────────
+  // When a brand-new contact sends their first message, the conversation is new.
+  // If the workspace has round-robin auto-assignment enabled, assign the
+  // conversation to the next team member in rotation.
+  if (!existingContactChannel) {
+    const { data: workspace } = await supabase
+      .from("workspaces")
+      .select("auto_assign_mode, last_assigned_member_index")
+      .eq("id", channel.workspace_id)
+      .single();
+
+    if (workspace?.auto_assign_mode === "round-robin") {
+      // Get all active workspace members ordered by join date for stable rotation
+      const { data: members } = await supabase
+        .from("workspace_members")
+        .select("user_id")
+        .eq("workspace_id", channel.workspace_id)
+        .order("created_at", { ascending: true });
+
+      if (members && members.length > 0) {
+        const nextIndex =
+          ((workspace.last_assigned_member_index ?? -1) + 1) % members.length;
+        const assigneeId = members[nextIndex].user_id;
+
+        // Assign the conversation to the next member
+        await supabase
+          .from("conversations")
+          .update({ assigned_to: assigneeId })
+          .eq("id", conversation.id);
+
+        // Advance the round-robin counter so the next conversation goes to the
+        // following member
+        await supabase
+          .from("workspaces")
+          .update({ last_assigned_member_index: nextIndex })
+          .eq("id", channel.workspace_id);
+      }
+    }
+  }
+
   // ── Insert message ────────────────────────────────────────────────────────
 
   await supabase.from("messages").insert({
@@ -263,6 +311,14 @@ async function handleWebhook(request: NextRequest) {
     platform_message_id: msg.platformMessageId || null,
     status: "delivered",
   });
+
+  // Fire-and-forget: notify outbound webhooks about the received message
+  dispatchWebhookEvent(channel.workspace_id, "message.received", {
+    contactId,
+    conversationId: conversation.id,
+    text: msg.text || null,
+    platform: channel.platform,
+  }).catch(() => {});
 
   // ── Flow engine ───────────────────────────────────────────────────────────
 
@@ -318,6 +374,15 @@ async function handleWebhook(request: NextRequest) {
 
 // ── Global keywords ─────────────────────────────────────────────────────────
 
+// Built-in STOP keywords that always work, regardless of workspace configuration.
+// These are a compliance requirement: users must always be able to opt out of
+// messaging by sending any of these common unsubscribe phrases.
+const STOP_KEYWORDS = ["stop", "unsubscribe", "cancel", "quit", "optout", "opt-out"];
+
+// Built-in START keywords that always work. These allow users who previously
+// opted out to re-subscribe by sending a common opt-in phrase.
+const START_KEYWORDS = ["start", "subscribe", "optin", "opt-in"];
+
 async function handleGlobalKeywords(
   supabase: Awaited<ReturnType<typeof createServiceClient>>,
   workspaceId: string,
@@ -326,6 +391,28 @@ async function handleGlobalKeywords(
 ): Promise<boolean> {
   if (!text) return false;
 
+  const normalizedText = text.toLowerCase().trim();
+
+  // Check built-in keywords first (always active, can't be disabled).
+  // This ensures compliance-critical opt-out keywords work even if the
+  // workspace hasn't configured any global keywords.
+  if (STOP_KEYWORDS.includes(normalizedText)) {
+    await supabase
+      .from("contacts")
+      .update({ is_subscribed: false })
+      .eq("id", contactId);
+    return true;
+  }
+
+  if (START_KEYWORDS.includes(normalizedText)) {
+    await supabase
+      .from("contacts")
+      .update({ is_subscribed: true })
+      .eq("id", contactId);
+    return true;
+  }
+
+  // Then check workspace-configured keywords (custom keywords set by the user)
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("global_keywords")
@@ -339,8 +426,6 @@ async function handleGlobalKeywords(
     action?: string;
     flowId?: string;
   }>;
-
-  const normalizedText = text.toLowerCase().trim();
 
   for (const kw of keywords) {
     if (normalizedText === kw.keyword.toLowerCase()) {

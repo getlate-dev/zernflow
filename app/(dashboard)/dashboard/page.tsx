@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { DashboardHome } from "./dashboard-home";
 
 export default function DashboardPage() {
-  redirect("/dashboard/flows");
+  return <DashboardHome />;
 }
