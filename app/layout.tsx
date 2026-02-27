@@ -49,6 +49,28 @@ export default function RootLayout({
             __html: `try{if(localStorage.getItem("theme")==="dark"||(!localStorage.getItem("theme")&&matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`,
           }}
         />
+        {/* JSON-LD structured data for SoftwareApplication schema.
+            Helps search engines understand that ZernFlow is a free web application,
+            improving rich snippet eligibility for product-related queries. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "ZernFlow",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+              description:
+                "Open source ManyChat alternative. Automate DMs, comments, and flows across Instagram, Facebook, Telegram, X, Bluesky, and Reddit.",
+            }),
+          }}
+        />
       </head>
       <body className={inter.className}>{children}</body>
     </html>

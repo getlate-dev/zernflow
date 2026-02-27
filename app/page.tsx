@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -19,43 +18,18 @@ import {
   Link2,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/platform-icon";
+import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
+/**
+ * Homepage for ZernFlow.
+ *
+ * Uses the shared MarketingLayout for consistent nav + footer across all
+ * marketing pages. All page-specific content (hero, features, comparisons,
+ * CTA, etc.) is rendered as children of MarketingLayout.
+ */
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="ZernFlow" width={28} height={28} className="rounded-lg" />
-            <span className="text-base font-bold text-gray-900">ZernFlow</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="https://github.com/getlate-dev/zernflow"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-900 sm:inline-flex"
-            >
-              <Github className="h-4 w-4" />
-              Star on GitHub
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-900"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              Get started free
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+    <MarketingLayout>
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-20 sm:pt-28">
         <div className="mx-auto max-w-3xl text-center">
@@ -114,7 +88,7 @@ export default function Home() {
                 backgroundSize: "20px 20px",
               }}
             >
-              {/* Trigger */}
+              {/* Trigger node */}
               <div className="w-40 rounded-xl border-2 border-indigo-200 bg-white p-4 shadow-sm">
                 <div className="mb-2 flex items-center gap-2">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50">
@@ -127,7 +101,7 @@ export default function Home() {
 
               <div className="hidden h-0.5 w-6 bg-gray-300 sm:block" />
 
-              {/* Send DM */}
+              {/* Send DM node */}
               <div className="hidden w-44 rounded-xl border-2 border-emerald-200 bg-white p-4 shadow-sm sm:block">
                 <div className="mb-2 flex items-center gap-2">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50">
@@ -140,7 +114,7 @@ export default function Home() {
 
               <div className="hidden h-0.5 w-6 bg-gray-300 sm:block" />
 
-              {/* Tag */}
+              {/* Tag node */}
               <div className="w-36 rounded-xl border-2 border-amber-200 bg-white p-4 shadow-sm">
                 <div className="mb-2 flex items-center gap-2">
                   <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-50">
@@ -322,7 +296,7 @@ export default function Home() {
               <p className="mt-4 text-base leading-relaxed text-gray-500">
                 ZernFlow is fully open source under the MIT license. Read every line of code,
                 self-host on your own infrastructure, or fork it and make it yours.
-                No "open core" tricks, no enterprise-only features behind a paywall.
+                No &quot;open core&quot; tricks, no enterprise-only features behind a paywall.
               </p>
               <p className="mt-3 text-base leading-relaxed text-gray-500">
                 Your automations, your contacts, your data. You own everything.
@@ -471,36 +445,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">ZernFlow</span>
-            <span className="text-sm text-gray-300">|</span>
-            <Link
-              href="https://github.com/getlate-dev/zernflow"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600"
-            >
-              <Github className="h-3.5 w-3.5" />
-              GitHub
-            </Link>
-            <Link
-              href="https://getlate.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-400 hover:text-gray-600"
-            >
-              Powered by Late
-            </Link>
-          </div>
-          <p className="text-xs text-gray-400">
-            Open source, MIT licensed
-          </p>
-        </div>
-      </footer>
-    </div>
+    </MarketingLayout>
   );
 }
