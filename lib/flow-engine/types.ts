@@ -155,9 +155,9 @@ export interface FlowExecutionContext {
   contactId: string;
   conversationId: string;
   workspaceId: string;
-  /** The Late API conversation ID (from conversations.late_conversation_id) */
+  /** The Zernio API conversation ID (from conversations.late_conversation_id) */
   lateConversationId?: string;
-  /** The Late API account ID (from channels.late_account_id) */
+  /** The Zernio API account ID (from channels.late_account_id) */
   lateAccountId?: string;
   incomingMessage: {
     text?: string;

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createLateClient } from "@/lib/late-client";
+import { createZernioClient } from "@/lib/zernio-client";
 
 /**
  * POST /api/v1/channels/test-key
  *
- * Tests a Late API key, saves it to the workspace, and auto-syncs channels.
+ * Tests a Zernio API key, saves it to the workspace, and auto-syncs channels.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
   // Validate the key by listing accounts
   let accounts: Array<{ _id?: string; platform?: string; username?: string; displayName?: string; profilePicture?: string }>;
   try {
-    const late = createLateClient(apiKey.trim());
-    const res = await late.accounts.listAccounts();
+    const zernio = createZernioClient(apiKey.trim());
+    const res = await zernio.accounts.listAccounts();
     accounts = (res.data?.accounts ?? []) as typeof accounts;
   } catch (err) {
     const message =

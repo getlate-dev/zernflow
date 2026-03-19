@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@getlatedev/node": "^0.1.18",
+    "@zernio/node": "^0.2.0",
     "@icons-pack/react-simple-icons": "^13.11.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",

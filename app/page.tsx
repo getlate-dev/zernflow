@@ -75,8 +75,8 @@ export default function Home() {
             <span className="text-indigo-600">ManyChat Alternative</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-gray-500">
-            Automate DMs, comments, and flows across Instagram, Facebook, Telegram,
-            X, Bluesky, and Reddit. Free, self-hostable, and built for developers.
+            Automate DMs, comments, and flows across Instagram, Facebook, WhatsApp,
+            Telegram, X, Bluesky, and Reddit. Free, self-hostable, and built for developers.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -158,11 +158,12 @@ export default function Home() {
       {/* Platforms */}
       <section className="border-y border-gray-100 bg-gray-50/60 py-10">
         <div className="mx-auto max-w-6xl px-6">
-          <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-gray-400">Works with 6 platforms (ManyChat only supports 2)</p>
+          <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-gray-400">Works with 7 platforms (ManyChat only supports 2)</p>
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
             {[
               { name: "Instagram", platform: "instagram" },
               { name: "Facebook", platform: "facebook" },
+              { name: "WhatsApp", platform: "whatsapp" },
               { name: "Telegram", platform: "telegram" },
               { name: "X / Twitter", platform: "twitter" },
               { name: "Bluesky", platform: "bluesky" },
@@ -203,6 +204,7 @@ export default function Home() {
               {/* Rows */}
               {[
                 { feature: "Instagram & Facebook", manychat: true, zernflow: true },
+                { feature: "WhatsApp", manychat: true, zernflow: true },
                 { feature: "Telegram", manychat: false, zernflow: true },
                 { feature: "X / Twitter", manychat: false, zernflow: true },
                 { feature: "Bluesky & Reddit", manychat: false, zernflow: true },
@@ -343,7 +345,7 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               {[
-                { label: "6 platforms, one tool", detail: "Instagram, Facebook, Telegram, X, Bluesky, Reddit. ManyChat only does 2." },
+                { label: "7 platforms, one tool", detail: "Instagram, Facebook, WhatsApp, Telegram, X, Bluesky, Reddit. ManyChat only does 3." },
                 { label: "Free forever", detail: "No monthly fees. No per-account charges. No feature limits." },
                 { label: "Self-hostable", detail: "Clone the repo, set your env vars, deploy. Your server, your rules." },
                 { label: "Community-driven", detail: "Built in public. PRs welcome. Roadmap shaped by users, not investors." },
@@ -370,7 +372,7 @@ export default function Home() {
                 step: "1",
                 icon: CheckCircle,
                 title: "Connect your accounts",
-                desc: "Link your Instagram, Facebook, Telegram, or any other platform in a few clicks.",
+                desc: "Link your Instagram, Facebook, WhatsApp, Telegram, or any other platform in a few clicks.",
               },
               {
                 step: "2",
@@ -491,9 +493,10 @@ export default function Home() {
               href="https://zernio.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-400 hover:text-gray-600"
+              className="hover:opacity-80 transition-opacity"
             >
-              Powered by Zernio
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/powered-by-zernio.svg" alt="Powered by Zernio" className="h-10" />
             </Link>
           </div>
           <p className="text-xs text-gray-400">

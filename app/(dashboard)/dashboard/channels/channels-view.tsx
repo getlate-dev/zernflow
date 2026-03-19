@@ -25,6 +25,7 @@ const platformLabels: Record<Platform, string> = {
   telegram: "Telegram",
   bluesky: "Bluesky",
   reddit: "Reddit",
+  whatsapp: "WhatsApp",
 };
 
 const connectablePlatforms: { id: Platform; label: string }[] = [
@@ -34,6 +35,7 @@ const connectablePlatforms: { id: Platform; label: string }[] = [
   { id: "telegram", label: "Telegram" },
   { id: "bluesky", label: "Bluesky" },
   { id: "reddit", label: "Reddit" },
+  { id: "whatsapp", label: "WhatsApp" },
 ];
 
 function getPlatformLabel(platform: string): string {
@@ -56,6 +58,8 @@ function getDmLink(platform: Platform, username: string | null): { url: string |
       return handle ? { url: `https://x.com/${handle}`, label: `x.com/${handle}` } : { url: null, label: "" };
     case "reddit":
       return handle ? { url: `https://reddit.com/message/compose/?to=${handle}`, label: `reddit.com/.../to=${handle}` } : { url: null, label: "" };
+    case "whatsapp":
+      return handle ? { url: `https://wa.me/${handle}`, label: `wa.me/${handle}` } : { url: null, label: "" };
     default:
       return { url: null, label: "" };
   }
@@ -176,7 +180,7 @@ export function ChannelsView({
           <div>
             <h1 className="text-2xl font-bold">Channels</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your connected social media accounts from Late
+              Your connected social media accounts from Zernio
             </p>
           </div>
           <div className="flex items-center gap-3">

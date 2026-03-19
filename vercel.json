@@ -4,11 +4,7 @@
       "path": "/api/cron/jobs",
       "schedule": "* * * * *"
     },
-    {
-      "path": "/api/cron/comments",
-      "schedule": "*/5 * * * *"
-    },
-    {
+{
       "path": "/api/cron/sequences",
       "schedule": "* * * * *"
     }

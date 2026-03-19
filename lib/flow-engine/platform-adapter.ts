@@ -59,7 +59,7 @@ interface AdaptedMessage {
 
 /**
  * Adapts rich message content to work across different platforms.
- * Facebook/Instagram: Full support for quick replies, buttons, carousels.
+ * Facebook/Instagram/WhatsApp: Full support for quick replies, buttons, carousels.
  * Telegram: Buttons become inline keyboard, carousels become multiple messages.
  * Twitter/X, Bluesky, Reddit: Interactive elements become numbered text options.
  */
@@ -70,6 +70,7 @@ export function adaptMessage(
   switch (platform) {
     case "facebook":
     case "instagram":
+    case "whatsapp":
       return adaptForMeta(content);
     case "telegram":
       return adaptForTelegram(content);

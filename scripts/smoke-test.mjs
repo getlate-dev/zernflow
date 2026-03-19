@@ -5,7 +5,7 @@
  * This script:
  * 1. Creates a simple test flow (trigger -> send message)
  * 2. Creates a keyword trigger for "test"
- * 3. Sends a simulated Late webhook to the deployed app
+ * 3. Sends a simulated Zernio webhook to the deployed app
  * 4. Verifies: contact created, conversation created, message stored, flow session ran
  * 5. Cleans up test data
  *
@@ -249,7 +249,7 @@ async function verify() {
   if (outbound) {
     pass(`Outbound message sent: "${outbound.text}" (status: ${outbound.status})`);
   } else {
-    info("Outbound message not found. This is expected if Late API key doesn't have inbox access for this channel.");
+    info("Outbound message not found. This is expected if Zernio API key doesn't have inbox access for this channel.");
     info("The important thing is that the flow DID execute (check session above).");
   }
 

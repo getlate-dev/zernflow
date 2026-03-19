@@ -4,7 +4,7 @@ import { executeFlow } from "@/lib/flow-engine/engine";
 import { matchTrigger } from "@/lib/flow-engine/trigger-matcher";
 import crypto from "crypto";
 
-// ── Late API webhook payload (actual shape from status-webhook.ts) ───────────
+// ── Zernio API webhook payload ───────────────────────────────────────────────
 
 interface WebhookPayload {
   event: string;
@@ -87,19 +87,6 @@ async function handleWebhook(request: NextRequest) {
   }
 
   const supabase = await createServiceClient();
-
-  // Idempotency: skip if this message was already processed
-  if (msg.platformMessageId) {
-    const { data: existing } = await supabase
-      .from("messages")
-      .select("id")
-      .eq("platform_message_id", msg.platformMessageId)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json({ ok: true, skipped: true, reason: "duplicate" });
-    }
-  }
 
   // Look up channel by late_account_id
   const { data: channel } = await supabase
@@ -250,19 +237,7 @@ async function handleWebhook(request: NextRequest) {
       .then(() => {});
   }
 
-  // ── Insert message ────────────────────────────────────────────────────────
-
-  await supabase.from("messages").insert({
-    conversation_id: conversation.id,
-    direction: "inbound",
-    text: msg.text || null,
-    attachments: msg.attachments.length > 0 ? msg.attachments : null,
-    quick_reply_payload: metadata?.quickReplyPayload || null,
-    postback_payload: metadata?.postbackPayload || null,
-    callback_data: metadata?.callbackData || null,
-    platform_message_id: msg.platformMessageId || null,
-    status: "delivered",
-  });
+  // Messages are stored by Zernio (source of truth) — no local insert needed.
 
   // ── Flow engine ───────────────────────────────────────────────────────────
 

@@ -48,6 +48,7 @@ const platformLabels: Record<Platform, string> = {
   telegram: "Telegram",
   bluesky: "Bluesky",
   reddit: "Reddit",
+  whatsapp: "WhatsApp",
 };
 
 export function GrowthView({
@@ -475,7 +476,7 @@ export function GrowthView({
                   className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <p className="mt-1 text-[11px] text-muted-foreground/60">
-                  Limit this rule to specific Late post IDs. If empty, all posts
+                  Limit this rule to specific Zernio post IDs. If empty, all posts
                   on this channel are monitored.
                 </p>
               </div>

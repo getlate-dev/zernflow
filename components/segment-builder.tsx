@@ -108,6 +108,7 @@ const platforms: { value: Platform; label: string }[] = [
   { value: "telegram", label: "Telegram" },
   { value: "bluesky", label: "Bluesky" },
   { value: "reddit", label: "Reddit" },
+  { value: "whatsapp", label: "WhatsApp" },
 ];
 
 function generateId() {

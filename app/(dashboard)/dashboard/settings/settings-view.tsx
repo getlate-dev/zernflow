@@ -191,7 +191,7 @@ export function SettingsView({
 
           <hr className="border-border" />
 
-          {/* Late API Key */}
+          {/* Zernio API Key */}
           <section>
             <div className="flex items-center gap-2">
               <Key className="h-4 w-4 text-muted-foreground" />

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createLateClient } from "@/lib/late-client";
+import { createZernioClient } from "@/lib/zernio-client";
 
 async function getWorkspace(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
@@ -22,9 +22,9 @@ async function getWorkspace(supabase: Awaited<ReturnType<typeof createClient>>) 
 /**
  * POST /api/v1/channels/sync
  *
- * Syncs all Late accounts as channels for the current workspace.
+ * Syncs all Zernio accounts as channels for the current workspace.
  * Creates new channels for accounts not yet in the DB.
- * Deactivates channels whose Late accounts no longer exist.
+ * Deactivates channels whose Zernio accounts no longer exist.
  */
 export async function POST() {
   const supabase = await createClient();
@@ -34,15 +34,15 @@ export async function POST() {
 
   if (!workspace.late_api_key_encrypted) {
     return NextResponse.json(
-      { error: "Late API key not configured. Go to Settings first." },
+      { error: "Zernio API key not configured. Go to Settings first." },
       { status: 400 }
     );
   }
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const zernio = createZernioClient(workspace.late_api_key_encrypted);
 
   try {
-    const res = await late.accounts.listAccounts();
+    const res = await zernio.accounts.listAccounts();
     const lateAccounts = res.data?.accounts ?? [];
 
     // Get existing channels for this workspace
@@ -51,7 +51,7 @@ export async function POST() {
       .select("*")
       .eq("workspace_id", workspace.id);
 
-    const existingByLateId = new Map(
+    const existingByZernioId = new Map(
       (existingChannels ?? []).map((c) => [c.late_account_id, c])
     );
 
@@ -65,7 +65,7 @@ export async function POST() {
       const acc = account as typeof account & { profilePicture?: string };
       const profilePic = acc.profilePicture || null;
 
-      const existing = existingByLateId.get(account._id);
+      const existing = existingByZernioId.get(account._id);
 
       if (existing) {
         if (
@@ -97,7 +97,7 @@ export async function POST() {
       }
     }
 
-    // Deactivate channels whose Late accounts no longer exist
+    // Deactivate channels whose Zernio accounts no longer exist
     let deactivated = 0;
     for (const channel of existingChannels ?? []) {
       if (!lateAccountIds.has(channel.late_account_id) && channel.is_active) {

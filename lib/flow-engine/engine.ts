@@ -19,7 +19,7 @@ import type {
 } from "./types";
 import { executeAiResponse } from "./nodes/ai-response";
 import { adaptMessage } from "./platform-adapter";
-import { createLateClient } from "@/lib/late-client";
+import { createZernioClient } from "@/lib/zernio-client";
 
 export async function executeFlow(
   supabase: SupabaseClient<Database>,
@@ -311,7 +311,7 @@ async function executeSendMessage(
 
   if (!workspace?.late_api_key_encrypted) return;
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const zernio = createZernioClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id from channel if not in context
   let lateAccountId = context.lateAccountId;
@@ -350,7 +350,7 @@ async function executeSendMessage(
     const text = interpolateVariables(adapted.text, context.variables || {});
 
     try {
-      // Send via Late REST API
+      // Send via Zernio REST API
       const attachments = adapted.imageUrl
         ? [{ type: "image", url: adapted.imageUrl }]
         : undefined;
@@ -374,9 +374,9 @@ async function executeSendMessage(
         body.replyMarkup = adapted.replyMarkup;
       }
 
-      const response = await late.messages.sendInboxMessage({
+      const response = await zernio.messages.sendInboxMessage({
         path: { conversationId: lateConversationId },
-        body: body as Parameters<typeof late.messages.sendInboxMessage>[0]["body"],
+        body: body as Parameters<typeof zernio.messages.sendInboxMessage>[0]["body"],
       });
 
       // Store outbound message
@@ -718,7 +718,7 @@ async function executeCommentReply(
 
   if (!workspace?.late_api_key_encrypted) return;
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const zernio = createZernioClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id
   let lateAccountId = context.lateAccountId;
@@ -745,7 +745,7 @@ async function executeCommentReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.comments.replyToInboxPost({
+    await zernio.comments.replyToInboxPost({
       path: { postId },
       body: { accountId: lateAccountId, message: text, commentId },
     });
@@ -755,7 +755,7 @@ async function executeCommentReply(
 }
 
 /**
- * Send a private DM to the commenter via the Late API's private reply endpoint.
+ * Send a private DM to the commenter via the Zernio API's private reply endpoint.
  * This creates a DM conversation from a comment context.
  */
 async function executePrivateReply(
@@ -771,7 +771,7 @@ async function executePrivateReply(
 
   if (!workspace?.late_api_key_encrypted) return;
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const zernio = createZernioClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id
   let lateAccountId = context.lateAccountId;
@@ -798,7 +798,7 @@ async function executePrivateReply(
   const text = interpolateVariables(data.text, context.variables || {});
 
   try {
-    await late.comments.sendPrivateReplyToComment({
+    await zernio.comments.sendPrivateReplyToComment({
       path: { postId, commentId },
       body: { accountId: lateAccountId, message: text },
     });

@@ -12,7 +12,8 @@ export type Platform =
   | "twitter"
   | "telegram"
   | "bluesky"
-  | "reddit";
+  | "reddit"
+  | "whatsapp";
 
 export type FlowStatus = "draft" | "published" | "archived";
 export type ConversationStatus = "open" | "closed" | "snoozed";

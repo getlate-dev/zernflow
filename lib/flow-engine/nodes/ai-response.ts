@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database";
 import type { FlowExecutionContext, AiResponseNodeData } from "../types";
-import { createLateClient } from "@/lib/late-client";
+import { createZernioClient } from "@/lib/zernio-client";
 import { generateText, createGateway } from "ai";
 
 export async function executeAiResponse(
@@ -9,7 +9,7 @@ export async function executeAiResponse(
   data: AiResponseNodeData,
   context: FlowExecutionContext
 ) {
-  // Get workspace for Late API key + AI Gateway key
+  // Get workspace for Zernio API key + AI Gateway key
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("late_api_key_encrypted, ai_api_key")
@@ -18,7 +18,7 @@ export async function executeAiResponse(
 
   if (!workspace?.late_api_key_encrypted) return;
 
-  const late = createLateClient(workspace.late_api_key_encrypted);
+  const zernio = createZernioClient(workspace.late_api_key_encrypted);
 
   // Resolve late_account_id from channel if not in context
   let lateAccountId = context.lateAccountId;
@@ -90,8 +90,8 @@ export async function executeAiResponse(
 
     const text = result.text;
 
-    // Send via Late REST API (same pattern as executeSendMessage)
-    const response = await late.messages.sendInboxMessage({
+    // Send via Zernio REST API (same pattern as executeSendMessage)
+    const response = await zernio.messages.sendInboxMessage({
       path: { conversationId: lateConversationId },
       body: { accountId: lateAccountId, message: text },
     });

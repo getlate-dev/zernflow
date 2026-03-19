@@ -162,55 +162,37 @@ export function MessageThread({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Subscribe to new messages via Realtime
+  // Listen for conversation updates (last_message_at changes when a new message arrives)
+  // and re-fetch messages from Zernio API.
   useEffect(() => {
     if (!conversation) return;
 
     const supabase = createClient();
     const channel = supabase
-      .channel(`messages-${conversation.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversation.id}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages((prev) => {
-            // If this message already exists (from API response), skip
-            if (prev.some((m) => m.id === newMessage.id)) return prev;
-            // If there's an optimistic message with matching text, replace it
-            const optimisticIdx = prev.findIndex(
-              (m) =>
-                m.id.startsWith("optimistic-") &&
-                m.text === newMessage.text &&
-                m.direction === newMessage.direction
-            );
-            if (optimisticIdx !== -1) {
-              const updated = [...prev];
-              updated[optimisticIdx] = newMessage;
-              return updated;
-            }
-            return [...prev, newMessage];
-          });
-        }
-      )
+      .channel(`conversation-${conversation.id}`)
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversation.id}`,
+          table: "conversations",
+          filter: `id=eq.${conversation.id}`,
         },
-        (payload) => {
-          const updated = payload.new as Message;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === updated.id ? updated : m))
-          );
+        async () => {
+          try {
+            const res = await fetch(
+              `/api/v1/messages?conversationId=${conversation.id}`
+            );
+            if (res.ok) {
+              const freshMessages = await res.json();
+              setMessages((prev) => {
+                const optimistic = prev.filter((m) => m.id.startsWith("optimistic-"));
+                return [...freshMessages, ...optimistic];
+              });
+            }
+          } catch (err) {
+            console.error("Failed to refresh messages:", err);
+          }
         }
       )
       .subscribe();
